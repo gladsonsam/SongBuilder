@@ -21,7 +21,7 @@ A powerful web application for managing and formatting song lyrics with chords. 
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/YOUR_USERNAME/songbuilder.git
+git clone https://github.com/gladsonsam/songbuilder.git
 ```
 
 2. Install dependencies:
