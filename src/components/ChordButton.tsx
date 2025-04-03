@@ -6,12 +6,17 @@ interface ChordButtonProps extends Omit<ButtonProps, 'children'> {
 }
 
 export function ChordButton({ chord, style, onClick, ...props }: ChordButtonProps) {
+  // Store the original chord text for transposition
+  const originalChord = chord;
+  
   return (
     <Button
       size="xs"
       variant="light"
       radius="sm"
       px="xs"
+      className="chord"
+      data-original={originalChord}
       style={{ 
         fontFamily: 'monospace',
         color: 'var(--mantine-color-dark-9)', // Black text
@@ -20,7 +25,7 @@ export function ChordButton({ chord, style, onClick, ...props }: ChordButtonProp
         fontWeight: 600,
         ...style 
       }}
-      onClick={onClick ? () => onClick(chord) : undefined}
+      onClick={onClick ? () => onClick(originalChord) : undefined}
       {...props}
     >
       {chord}

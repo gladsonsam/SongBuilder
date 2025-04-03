@@ -19,4 +19,7 @@ export interface Song {
   sections: Section[];
   createdAt?: string;
   updatedAt?: string;
+  originalKey?: string;
+  currentTranspose?: string;
+  originalSections?: Section[]; // Store original sections before transposition
 }

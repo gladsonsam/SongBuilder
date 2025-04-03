@@ -1,0 +1,30 @@
+.transpose-control {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.input-group {
+  display: flex;
+  align-items: center;
+}
+
+.transpose-input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  font-size: 14px;
+  transition: border-color 0.2s;
+}
+
+.transpose-input:focus {
+  border-color: #228be6;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(34, 139, 230, 0.2);
+}
+
+.transpose-help {
+  color: #868e96;
+  font-size: 12px;
+}

@@ -19,25 +19,50 @@ export function ExportModal({ opened, onClose, sections }: ExportModalProps) {
     if (opened) {
       handleExport();
     }
-  }, [opened, format, sections]);
+  }, [opened, format]); // Removed sections dependency to avoid re-exporting on every section change
 
   const handleExport = () => {
     try {
       let text = '';
+      
+      // Get the current transposed chords from the DOM
+      const updatedSections = [...sections].map(section => {
+        // Create a deep copy to avoid modifying the original
+        const sectionCopy = { ...section, chords: [...section.chords] };
+        
+        // Update chord text with current transposed values from DOM
+        sectionCopy.chords = sectionCopy.chords.map(chord => {
+          // Find the corresponding DOM element
+          const chordElement = document.querySelector(`[data-original="${chord.text}"]`);
+          if (chordElement && chordElement.textContent) {
+            // Use the current displayed chord text (which may be transposed)
+            return { ...chord, text: chordElement.textContent };
+          }
+          return chord;
+        });
+        
+        return sectionCopy;
+      });
+      
       if (format === 'freeshow') {
-        text = exportToFreeshowText(sections);
+        text = exportToFreeshowText(updatedSections);
       }
       // TODO: Add support for other formats
 
       setExportedText(text);
 
       if (exportType === 'text') {
+        // Only show notification once when first opened
         navigator.clipboard.writeText(text).then(() => {
-          notifications.show({
-            title: 'Success',
-            message: 'Copied to clipboard',
-            color: 'green'
-          });
+          // Only show notification when first opened, not on every change
+          if (opened) {
+            notifications.show({
+              title: 'Success',
+              message: 'Copied to clipboard',
+              color: 'green',
+              autoClose: 2000 // Close after 2 seconds
+            });
+          }
         });
       }
     } catch (error) {

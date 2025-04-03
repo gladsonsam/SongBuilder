@@ -1,3 +1,5 @@
+import { logger } from './logger';
+
 const DB_NAME = 'songbuilder';
 const DB_VERSION = 2;
 let db: IDBDatabase | null = null;
@@ -33,24 +35,24 @@ export async function initDB(): Promise<IDBDatabase> {
 
     const request = indexedDB.open(DB_NAME, DB_VERSION);
 
-    request.onerror = (event) => {
-      console.error('Database error:', request.error);
+    request.onerror = () => {
+      logger.error('Database error:', request.error);
       reject(request.error);
     };
 
-    request.onsuccess = (event) => {
+    request.onsuccess = () => {
       db = request.result;
-      console.log('Database opened successfully');
+      logger.log('Database opened successfully');
       resolve(db);
     };
 
     request.onupgradeneeded = (event) => {
-      console.log('Database upgrade needed');
-      const database = (event.target as IDBOpenDBRequest).result;
+      logger.log('Database upgrade needed');
+      const database = event.target ? (event.target as IDBOpenDBRequest).result : request.result;
       
       // Handle version upgrade
       if (!database.objectStoreNames.contains('songs')) {
-        console.log('Creating songs store');
+        logger.log('Creating songs store');
         database.createObjectStore('songs', { keyPath: 'id' });
       }
     };
@@ -64,7 +66,7 @@ export async function initDB(): Promise<IDBDatabase> {
 
 // Initialize database when the module loads
 initDB().catch(error => {
-  console.error('Failed to initialize database:', error);
+  logger.error('Failed to initialize database:', error);
 });
 
 export async function saveSong(song: Omit<Song, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
@@ -90,7 +92,7 @@ export async function saveSong(song: Omit<Song, 'id' | 'createdAt' | 'updatedAt'
       };
 
       request.onsuccess = () => {
-        console.log('Song saved successfully:', songWithMetadata.id);
+        logger.log('Song saved successfully:', songWithMetadata.id);
         resolve(songWithMetadata.id);
       };
 
@@ -100,7 +102,7 @@ export async function saveSong(song: Omit<Song, 'id' | 'createdAt' | 'updatedAt'
       };
 
       transaction.oncomplete = () => {
-        console.log('Transaction completed');
+        logger.log('Transaction completed');
       };
     });
   } catch (error) {
@@ -124,7 +126,7 @@ export async function getAllSongs(): Promise<Song[]> {
       };
 
       request.onsuccess = () => {
-        console.log('Retrieved songs:', request.result?.length || 0);
+        logger.log('Retrieved songs:', request.result?.length || 0);
         resolve(request.result || []);
       };
 
@@ -154,7 +156,7 @@ export async function getSong(id: string): Promise<Song | null> {
       };
 
       request.onsuccess = () => {
-        console.log('Retrieved song:', id, request.result ? 'found' : 'not found');
+        logger.log('Retrieved song:', id, request.result ? 'found' : 'not found');
         resolve(request.result || null);
       };
     });
@@ -185,7 +187,7 @@ export async function updateSong(song: Song): Promise<void> {
       };
 
       request.onsuccess = () => {
-        console.log('Song updated successfully:', song.id);
+        logger.log('Song updated successfully:', song.id);
         resolve();
       };
     });
@@ -210,7 +212,7 @@ export async function deleteSong(id: string): Promise<void> {
       };
 
       request.onsuccess = () => {
-        console.log('Song deleted successfully:', id);
+        logger.log('Song deleted successfully:', id);
         resolve();
       };
     });
@@ -236,7 +238,7 @@ export async function clearDatabase(): Promise<void> {
       };
 
       request.onsuccess = () => {
-        console.log('Database cleared successfully');
+        logger.log('Database cleared successfully');
         resolve();
       };
     });
