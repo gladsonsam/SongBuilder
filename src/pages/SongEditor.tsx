@@ -8,13 +8,21 @@ import { ExportModal } from '../components/ExportModal';
 import { getSong, saveSong, updateSong } from '../utils/db';
 import { SongSection } from '../components/SongSection';
 import { Section, Song } from '../types/song';
+import TransposeControl from '../components/TransposeControl';
+import { useSongs } from '../context/SongContext';
+import { detectKey } from '../utils/transpose';
 
 export function SongEditor() {
   const navigate = useNavigate();
   const { id } = useParams();
+  // Only use the context for the initial load and final save, not for ongoing edits
+  const { updateSong: updateContextSong, currentTranspose } = useSongs();
 
   // State
   const [song, setSong] = useState<Song>({ title: '', artist: '', sections: [] });
+  // Add separate state for title and artist to ensure they can be edited independently
+  const [title, setTitle] = useState('');
+  const [artist, setArtist] = useState('');
   const [importModalOpen, setImportModalOpen] = useState(false);
   const [exportModalOpen, setExportModalOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -22,49 +30,95 @@ export function SongEditor() {
   // Load song if editing existing
   useEffect(() => {
     if (id) {
-      loadSong(id);
-    }
-  }, [id]);
-
-  const loadSong = async (songId: string) => {
-    try {
-      const loadedSong = await getSong(songId);
-      if (loadedSong) {
-        setSong(loadedSong);
-      }
-    } catch (error) {
-      console.error('Failed to load song:', error);
-      notifications.show({
-        title: 'Error',
-        message: 'Failed to load song',
-        color: 'red'
+      // Load directly from the database to avoid context issues
+      getSong(id).then(loadedSong => {
+        if (loadedSong) {
+          setSong(loadedSong);
+          // Initialize the separate title and artist state
+          setTitle(loadedSong.title || '');
+          setArtist(loadedSong.artist || '');
+        }
+      }).catch(error => {
+        console.error('Failed to load song:', error);
+        notifications.show({
+          title: 'Error',
+          message: 'Failed to load song',
+          color: 'red'
+        });
       });
     }
-  };
+  }, [id]);
+  
+  // No longer need these effects as we're using separate state for title and artist
+
+  // No longer need this function as we're loading directly in the useEffect
 
   const handleImport = (sections: Section[]) => {
     setSong(prev => ({ ...prev, sections }));
     setImportModalOpen(false);
   };
 
+  // No longer need these handlers as we're using the setTitle and setArtist functions directly
+
   const handleSave = async () => {
     setIsSaving(true);
     try {
+      // Create a song object with the current title and artist values
+      const updatedSong = {
+        ...song,
+        title: title,  // Use the separate title state
+        artist: artist // Use the separate artist state
+      };
+      
+      // If this is the first save, store the original sections
+      if (!updatedSong.originalSections) {
+        // Create a deep copy of the current sections to store as original
+        const originalSections = JSON.parse(JSON.stringify(updatedSong.sections));
+        
+        // Store the original key if detected
+        const allChords: string[] = [];
+        updatedSong.sections.forEach(section => {
+          section.chords.forEach(chord => {
+            allChords.push(chord.text);
+          });
+        });
+        const originalKey = updatedSong.originalKey || detectKey(allChords);
+        
+        // Update with original data
+        updatedSong.originalSections = originalSections;
+        updatedSong.originalKey = originalKey;
+      }
+      
+      // Add the current transpose value
+      updatedSong.currentTranspose = currentTranspose || '';
+      
+      // Make sure originalSections and originalKey are included if they weren't set above
+      if (!updatedSong.originalSections) {
+        updatedSong.originalSections = JSON.parse(JSON.stringify(updatedSong.sections));
+      }
+      if (!updatedSong.originalKey) {
+        updatedSong.originalKey = detectKey(updatedSong.sections.flatMap(section => section.chords.map(chord => chord.text)));
+      }
+
       if (id) {
+        // Update in database
         await updateSong({
-          ...song,
+          ...updatedSong,
           id,
-          title: song.title,
-          artist: song.artist,
-          sections: song.sections,
-          createdAt: song.createdAt || new Date().toISOString(),
+          title: updatedSong.title,
+          artist: updatedSong.artist,
+          sections: updatedSong.sections,
+          createdAt: updatedSong.createdAt || new Date().toISOString(),
           updatedAt: new Date().toISOString()
         });
+        
+        // Also update in context
+        updateContextSong(id, updatedSong);
       } else {
         const newId = await saveSong({
-          title: song.title,
-          artist: song.artist,
-          sections: song.sections
+          title: updatedSong.title,
+          artist: updatedSong.artist,
+          sections: updatedSong.sections
         });
         navigate(`/songs/${newId}`);
       }
@@ -122,16 +176,19 @@ export function SongEditor() {
       <Group grow>
         <TextInput
           label="Title"
-          value={song.title}
-          onChange={(e) => setSong(prev => ({ ...prev, title: e.target.value }))}
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
           placeholder="Enter song title"
+          size="md"
         />
         <TextInput
           label="Artist"
-          value={song.artist}
-          onChange={(e) => setSong(prev => ({ ...prev, artist: e.target.value }))}
+          value={artist}
+          onChange={(e) => setArtist(e.target.value)}
           placeholder="Enter artist name"
+          size="md"
         />
+        {id && <TransposeControl />}
       </Group>
 
       <Stack gap="md">
