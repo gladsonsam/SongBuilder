@@ -17,32 +17,21 @@ export function exportToFreeshowText(sections: Section[]): string {
 
       if (lineChords.length === 0) return line;
 
-      // Find word boundaries in the lyrics line
-      const words = line.split(/(\s+)/);
+      // Insert chords at their exact positions
       let result = '';
-      let currentPos = 0;
-      let chordIndex = 0;
+      let lastPos = 0;
 
-      // Process each word
-      words.forEach(word => {
-        if (!word) return;
-        
-        // Add any chords that should appear before this word
-        while (chordIndex < lineChords.length && lineChords[chordIndex].position <= currentPos) {
-          result += `[${lineChords[chordIndex].text}]`;
-          chordIndex++;
-        }
-
-        // Add the word
-        result += word;
-        currentPos += word.length;
+      // Process each chord
+      lineChords.forEach(chord => {
+        // Add text before this chord
+        result += line.substring(lastPos, chord.position);
+        // Add the chord
+        result += `[${chord.text}]`;
+        lastPos = chord.position;
       });
 
-      // Add any remaining chords at the end
-      while (chordIndex < lineChords.length) {
-        result += `[${lineChords[chordIndex].text}]`;
-        chordIndex++;
-      }
+      // Add remaining text after last chord
+      result += line.substring(lastPos);
 
       return result;
     }).filter(line => line !== '');
