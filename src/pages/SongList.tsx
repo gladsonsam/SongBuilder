@@ -4,7 +4,8 @@ import { ColoredTag } from '../components/ColoredTag';
 import { Container, Title, Text, Button, Stack, Group, Paper, TextInput, ActionIcon, Skeleton, Checkbox, Menu, MultiSelect } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { Link } from 'react-router-dom';
-import { IconPlus, IconSearch, IconTrash, IconEdit, IconDots, IconDownload, IconSortAscending, IconSortDescending, IconTags } from '@tabler/icons-react';
+import { IconPlus, IconSearch, IconTrash, IconEdit, IconDots, IconDownload, IconSortAscending, IconSortDescending, IconTags, IconDatabase } from '@tabler/icons-react';
+import { DatabaseTools } from '../components/DatabaseTools';
 import { getAllSongs, deleteSong } from '../utils/db';
 import { getTagColor } from '../utils/tagColors';
 import type { Song } from '../utils/db';
@@ -21,6 +22,7 @@ export function SongList() {
   const [sortDirection, setSortDirection] = React.useState<SortDirection>('desc');
   const [selectedTags, setSelectedTags] = React.useState<string[]>([]);
   const [availableTags, setAvailableTags] = React.useState<{value: string; label: string}[]>([]);
+  const [dbToolsOpen, setDbToolsOpen] = React.useState(false);
 
   // Load songs on mount and set up keyboard listener
   React.useEffect(() => {
@@ -61,11 +63,13 @@ export function SongList() {
       // Extract all unique tags from songs
       const tags = new Set<string>();
       allSongs.forEach(song => {
-        if (song.tags && song.tags.length > 0) {
+        if (song.tags && Array.isArray(song.tags) && song.tags.length > 0) {
           song.tags.forEach(tag => tags.add(tag));
         }
       });
-      setAvailableTags(Array.from(tags).sort().map(tag => ({ value: tag, label: tag })));
+      // Make sure we always have an array of objects with value and label properties
+      const tagOptions = Array.from(tags).sort().map(tag => ({ value: tag, label: tag }));
+      setAvailableTags(tagOptions.length > 0 ? tagOptions : []);
     } catch (error) {
       console.error('Failed to load songs:', error);
       notifications.show({
@@ -306,6 +310,13 @@ export function SongList() {
             >
               New Song
             </Button>
+            <Button
+              variant="light"
+              leftSection={<IconDatabase size={16} />}
+              onClick={() => setDbToolsOpen(true)}
+            >
+              Database Tools
+            </Button>
           </Group>
         </Group>
 
@@ -373,6 +384,8 @@ export function SongList() {
             />
           )}
         </Group>
+
+
 
         {/* Column Headers with Sort Indicators */}
         {filteredSongs.length > 0 && (
@@ -520,6 +533,12 @@ export function SongList() {
             </Stack>
           </Paper>
         )}
+        {/* Database Tools Modal */}
+        <DatabaseTools
+          opened={dbToolsOpen}
+          onClose={() => setDbToolsOpen(false)}
+          onComplete={loadSongs}
+        />
       </Stack>
     </Container>
   );

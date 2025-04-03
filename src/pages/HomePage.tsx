@@ -129,6 +129,8 @@ export function HomePage() {
                 View All Songs
               </Button>
             </Group>
+            
+
           </Stack>
         </Paper>
 
