@@ -29,3 +29,35 @@
   border-radius: 50%;
   margin-right: 8px;
 }
+
+/* Custom tag input styling */
+.tag-input-container {
+  display: flex;
+  border: 1px solid var(--mantine-color-dark-4);
+  border-radius: 4px;
+  background-color: var(--mantine-color-dark-6);
+  cursor: text;
+  min-height: 36px;
+  padding: 0 8px;
+}
+
+.tag-input {
+  border: none;
+  outline: none;
+  background: transparent;
+  flex-grow: 1;
+  min-width: 80px;
+  padding: 5px;
+  font-size: 14px;
+  color: inherit;
+  caret-color: var(--mantine-color-blue-5);
+}
+
+.tag-input::placeholder {
+  color: var(--mantine-color-gray-6);
+}
+
+.tag-input-container:focus-within {
+  border-color: var(--mantine-color-blue-filled);
+  box-shadow: 0 0 0 1px var(--mantine-color-blue-filled);
+}

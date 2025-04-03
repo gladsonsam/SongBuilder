@@ -6,6 +6,10 @@ interface Settings {
     chorus: string;
     bridge: string;
     tag: string;
+    break: string;
+    intro: string;
+    outro: string;
+    'pre-chorus': string;
   };
 }
 
@@ -16,10 +20,14 @@ interface SettingsContextType {
 
 const defaultSettings: Settings = {
   colors: {
-    verse: 'blue',
-    chorus: 'green',
-    bridge: 'orange',
-    tag: 'violet'
+    verse: 'blue',      // Blue
+    chorus: 'green',    // Green
+    bridge: 'orange',   // Orange
+    tag: 'violet',      // Violet
+    break: 'red',       // Red
+    intro: 'indigo',    // Indigo
+    outro: 'grape',     // Grape (purple)
+    'pre-chorus': 'cyan'  // Cyan (light blue)
   }
 };
 

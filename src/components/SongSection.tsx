@@ -4,7 +4,7 @@ import { useSettings } from '../context/SettingsContext';
 import { Chord } from '../types/song';
 
 interface SongSectionProps {
-  type: 'verse' | 'chorus' | 'bridge' | 'tag';
+  type: 'verse' | 'chorus' | 'bridge' | 'tag' | 'break' | 'intro' | 'outro' | 'pre-chorus';
   content: string;
   number?: number;
   chords: Chord[];
@@ -14,9 +14,17 @@ interface SongSectionProps {
 export function SongSection({ type, content, number, chords, onChordClick }: SongSectionProps) {
   const { settings } = useSettings();
   const sectionColor = settings.colors[type] || 'blue';
+  
+  // Check if the color is a hex code or a named Mantine color
+  const isHexColor = sectionColor.startsWith('#');
 
-  // Split content into lines
-  const lines = content.split('\n');
+  // Split content into lines and remove trailing empty lines
+  let lines = content.split('\n');
+  
+  // Trim trailing empty lines
+  while (lines.length > 0 && lines[lines.length - 1].trim() === '') {
+    lines.pop();
+  }
   
   // Group chords by line number
   const chordsByLine = chords.reduce((acc, chord) => {
@@ -32,8 +40,8 @@ export function SongSection({ type, content, number, chords, onChordClick }: Son
       p="md" 
       withBorder 
       style={{ 
-        backgroundColor: `var(--mantine-color-${sectionColor}-1)`,
-        border: `1px solid var(--mantine-color-${sectionColor}-3)`
+        backgroundColor: isHexColor ? `${sectionColor}20` : `var(--mantine-color-${sectionColor}-1)`,
+        border: isHexColor ? `1px solid ${sectionColor}` : `1px solid var(--mantine-color-${sectionColor}-3)`
       }}
     >
       <Stack gap="xs">
@@ -41,7 +49,7 @@ export function SongSection({ type, content, number, chords, onChordClick }: Son
           fw={700} 
           tt="uppercase" 
           size="sm"
-          style={{ color: `var(--mantine-color-${sectionColor}-7)` }}
+          style={{ color: isHexColor ? sectionColor : `var(--mantine-color-${sectionColor}-7)` }}
         >
           {type}{number ? ` ${number}` : ''}
         </Text>

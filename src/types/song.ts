@@ -6,7 +6,7 @@ export interface Chord {
 }
 
 export interface Section {
-  type: 'verse' | 'chorus' | 'bridge' | 'tag';
+  type: 'verse' | 'chorus' | 'bridge' | 'tag' | 'break' | 'intro' | 'outro' | 'pre-chorus';
   content: string;
   number?: number;
   chords: Chord[];

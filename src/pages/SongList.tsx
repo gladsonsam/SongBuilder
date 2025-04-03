@@ -94,7 +94,7 @@ export function SongList() {
       case 'artist':
         return songsCopy.sort((a, b) => sortMultiplier * a.artist.localeCompare(b.artist));
       case 'date':
-        return songsCopy.sort((a, b) => sortMultiplier * (new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()));
+        return songsCopy.sort((a, b) => sortMultiplier * (new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime()));
       default:
         return songsCopy;
     }
@@ -106,9 +106,10 @@ export function SongList() {
       // Toggle direction if clicking the same field
       setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
     } else {
-      // Set new field and default to ascending
+      // Set new field with appropriate default direction
       setSortField(field);
-      setSortDirection('asc');
+      // Default to descending for date (newest first), ascending for text fields
+      setSortDirection(field === 'date' ? 'desc' : 'asc');
     }
   };
   
@@ -228,7 +229,7 @@ export function SongList() {
     }
   };
 
-  // Filter songs based on search query, including lyrics and tags
+  // Filter and sort songs based on search query, including lyrics and tags
   const filteredSongs = songs.filter(song => {
     // First filter by tags if any are selected
     if (selectedTags.length > 0) {
@@ -255,27 +256,53 @@ export function SongList() {
       if (plainQuery) {
         const query = plainQuery.toLowerCase();
         
-        // Check title and artist
-        if (
+        // Check title, artist, tags, and lyrics
+        return (
           song.title.toLowerCase().includes(query) || 
-          song.artist.toLowerCase().includes(query)
-        ) {
-          return true;
-        }
-        
-        // Check tags (for partial matches not covered by hashtags)
-        if (song.tags && song.tags.some(tag => tag.toLowerCase().includes(query))) {
-          return true;
-        }
-        
-        // Check lyrics in all sections
-        return song.sections.some(section => 
-          section.content.toLowerCase().includes(query)
+          song.artist.toLowerCase().includes(query) ||
+          (song.tags && song.tags.some(tag => tag.toLowerCase().includes(query))) ||
+          song.sections.some(section => section.content.toLowerCase().includes(query))
         );
       }
     }
     
     return true; // If no search query, include all songs that passed tag filter
+  }).sort((a, b) => {
+    // If there's a search query, prioritize songs where the title matches
+    if (searchQuery) {
+      const { plainQuery } = parseSearchQuery(searchQuery);
+      if (plainQuery) {
+        const query = plainQuery.toLowerCase();
+        
+        // Check if title contains the query
+        const titleA = a.title.toLowerCase();
+        const titleB = b.title.toLowerCase();
+        
+        // If only one title contains the query, prioritize it
+        const aContainsQuery = titleA.includes(query);
+        const bContainsQuery = titleB.includes(query);
+        
+        if (aContainsQuery && !bContainsQuery) return -1;
+        if (!aContainsQuery && bContainsQuery) return 1;
+        
+        // If both titles contain the query, prioritize the one that starts with it
+        const aStartsWithQuery = titleA.startsWith(query);
+        const bStartsWithQuery = titleB.startsWith(query);
+        
+        if (aStartsWithQuery && !bStartsWithQuery) return -1;
+        if (!aStartsWithQuery && bStartsWithQuery) return 1;
+        
+        // If both titles start with the query, prioritize exact matches
+        const aExactMatch = titleA === query;
+        const bExactMatch = titleB === query;
+        
+        if (aExactMatch && !bExactMatch) return -1;
+        if (!aExactMatch && bExactMatch) return 1;
+      }
+    }
+    
+    // Fall back to the current sort order if no search query or both match equally
+    return 0;
   });
 
   return (

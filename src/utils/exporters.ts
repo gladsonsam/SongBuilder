@@ -5,8 +5,11 @@ import { Section, Chord, Song } from '../types/song';
  */
 export function exportToFreeshowText(sections: Section[]): string {
   return sections.map(section => {
-    // Convert section type to title case
-    const sectionHeader = `[${section.type.charAt(0).toUpperCase() + section.type.slice(1)}]`;
+    // Convert section type to Freeshow format (capitalize each word)
+    const sectionHeader = `[${section.type
+      .split('-')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join('-')}]`;
     
     // Split content into lines and process each line
     const lines = section.content.split('\n');
@@ -61,18 +64,25 @@ export function exportToShowFile(song: Song, sections: Section[]): string {
     layoutSlides.push({ id: slideId });
     
     // Determine the color based on section type
-    let color = '#5825f5'; // Default color for verses
-    if (section.type === 'chorus') {
-      color = '#f525d2';
-    } else if (section.type === 'bridge') {
-      color = '#25f5e6';
-    } else if (section.type === 'tag') {
-      color = '#f5a425';
+    let color;
+    switch (section.type) {
+      case 'verse': color = '#5825f5'; break;     // Purple
+      case 'chorus': color = '#25a0f5'; break;    // Blue
+      case 'bridge': color = '#25f5e6'; break;    // Teal
+      case 'tag': color = '#f5a425'; break;       // Orange
+      case 'break': color = '#f52525'; break;     // Red
+      case 'intro': color = '#7b25f5'; break;     // Indigo
+      case 'outro': color = '#b725f5'; break;     // Purple
+      case 'pre-chorus': color = '#25f55b'; break; // Green
+      default: color = '#5825f5'; break;          // Default purple
     }
     
     // Create the slide object
     const slide: any = {
-      group: section.type.charAt(0).toUpperCase() + section.type.slice(1),
+      group: section.type
+        .split('-')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+        .join('-'),
       color,
       settings: {},
       notes: "",

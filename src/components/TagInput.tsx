@@ -1,7 +1,8 @@
 import * as React from 'react';
-import { Badge, CloseButton, Group, TextInput, Text, ActionIcon, Tooltip } from '@mantine/core';
+import { Badge, CloseButton, Group, Text, ActionIcon } from '@mantine/core';
 import { IconPlus, IconColorSwatch } from '@tabler/icons-react';
 import { getTagColor, changeTagColor } from '../utils/tagColors';
+import './TagInput.css';
 
 interface TagInputProps {
   value: string[];
@@ -15,6 +16,7 @@ export function TagInput({ value = [], onChange, placeholder = 'Add tag...', lab
   const [inputValue, setInputValue] = React.useState('');
   const [showSuggestions, setShowSuggestions] = React.useState(false);
   const inputRef = React.useRef<HTMLInputElement>(null);
+  const wrapperRef = React.useRef<HTMLDivElement>(null);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInputValue(e.target.value);
@@ -58,11 +60,12 @@ export function TagInput({ value = [], onChange, placeholder = 'Add tag...', lab
     <div>
       {label && <Text size="sm" fw={500} mb={5}>{label}</Text>}
       
+      {/* Display tags above the input */}
       <Group gap="xs" mb="xs">
         {value.map((tag, index) => (
           <Badge 
             key={index} 
-            size="lg"
+            size="sm"
             radius="sm"
             variant="filled"
             color={getTagColor(tag)}
@@ -88,7 +91,7 @@ export function TagInput({ value = [], onChange, placeholder = 'Add tag...', lab
                 }}
                 aria-label="Change tag color"
               >
-                <IconColorSwatch size={12} />
+                <IconColorSwatch size={10} />
               </ActionIcon>
             }
           >
@@ -97,32 +100,32 @@ export function TagInput({ value = [], onChange, placeholder = 'Add tag...', lab
         ))}
       </Group>
       
-      <Group gap="xs">
-        <TextInput
-          ref={inputRef}
-          placeholder={placeholder}
-          value={inputValue}
-          onChange={handleInputChange}
-          onKeyDown={handleInputKeyDown}
-          onFocus={() => setShowSuggestions(inputValue.length > 0)}
-          onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
-          style={{ flex: 1 }}
-        />
-        <Tooltip label="Add tag">
-          <ActionIcon 
-            color="blue" 
-            onClick={() => {
-              if (inputValue.trim()) {
-                addTag(inputValue.trim());
-                inputRef.current?.focus();
-              }
-            }}
-            disabled={!inputValue.trim()}
-          >
-            <IconPlus size={16} />
-          </ActionIcon>
-        </Tooltip>
-      </Group>
+      {/* Standard Mantine TextInput */}
+      <div className="mantine-input-wrapper mantine-TextInput-wrapper" ref={wrapperRef}>
+        <div className="mantine-Input-wrapper mantine-TextInput-input" data-variant="default">
+          <div className="mantine-Input-input mantine-TextInput-input">
+            <input
+              ref={inputRef}
+              type="text"
+              value={inputValue}
+              onChange={handleInputChange}
+              onKeyDown={handleInputKeyDown}
+              onFocus={() => setShowSuggestions(inputValue.length > 0)}
+              onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+              placeholder={placeholder}
+              style={{
+                border: 'none',
+                outline: 'none',
+                background: 'transparent',
+                width: '100%',
+                padding: '5px',
+                fontSize: '14px',
+                color: 'inherit'
+              }}
+            />
+          </div>
+        </div>
+      </div>
 
       {showSuggestions && filteredSuggestions.length > 0 && (
         <div style={{ 
