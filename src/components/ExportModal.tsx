@@ -2,7 +2,7 @@ import * as React from 'react';
 import { Modal, Stack, Text, Textarea, Button, Group, SegmentedControl, Select } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { Section } from '../types/song';
-import { exportToFreeshowText } from '../utils/exporters';
+import { exportToFreeshowText, exportToShowFile } from '../utils/exporters';
 
 interface ExportModalProps {
   opened: boolean;
@@ -12,7 +12,7 @@ interface ExportModalProps {
 
 export function ExportModal({ opened, onClose, sections }: ExportModalProps) {
   const [exportType, setExportType] = React.useState<'text' | 'file'>('text');
-  const [format, setFormat] = React.useState('freeshow');
+  const [format, setFormat] = React.useState('freeshow-text');
   const [exportedText, setExportedText] = React.useState('');
 
   React.useEffect(() => {
@@ -24,6 +24,8 @@ export function ExportModal({ opened, onClose, sections }: ExportModalProps) {
   const handleExport = () => {
     try {
       let text = '';
+      let fileData: Blob | null = null;
+      let fileName = '';
       
       // Get the current transposed chords from the DOM
       const updatedSections = [...sections].map(section => {
@@ -44,14 +46,28 @@ export function ExportModal({ opened, onClose, sections }: ExportModalProps) {
         return sectionCopy;
       });
       
-      if (format === 'freeshow') {
+      // Get song metadata from the first section's content (title might be in there)
+      const songTitle = document.querySelector('input[value]')?.getAttribute('value') || 'Untitled Song';
+      const songArtist = document.querySelectorAll('input[value]')[1]?.getAttribute('value') || '';
+      
+      const songData = {
+        title: songTitle,
+        artist: songArtist,
+        sections: updatedSections
+      };
+      
+      if (format === 'freeshow-text') {
         text = exportToFreeshowText(updatedSections);
+        fileName = `${songTitle.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.txt`;
+      } else if (format === 'freeshow-show') {
+        text = exportToShowFile(songData, updatedSections);
+        fileName = `${songTitle.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.show`;
       }
       // TODO: Add support for other formats
 
-      setExportedText(text);
+      setExportedText(format.endsWith('text') ? text : 'Binary file format - use Save as File option');
 
-      if (exportType === 'text') {
+      if (exportType === 'text' && format.endsWith('text')) {
         // Only show notification once when first opened
         navigator.clipboard.writeText(text).then(() => {
           // Only show notification when first opened, not on every change
@@ -64,6 +80,32 @@ export function ExportModal({ opened, onClose, sections }: ExportModalProps) {
             });
           }
         });
+      } else if (exportType === 'file') {
+        // Create file blob based on format
+        if (format === 'freeshow-text') {
+          fileData = new Blob([text], { type: 'text/plain' });
+        } else if (format === 'freeshow-show') {
+          fileData = new Blob([text], { type: 'application/json' });
+        }
+        
+        if (fileData) {
+          // Create download link and trigger it
+          const url = URL.createObjectURL(fileData);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = fileName;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          URL.revokeObjectURL(url);
+          
+          notifications.show({
+            title: 'Success',
+            message: `Saved as ${fileName}`,
+            color: 'green',
+            autoClose: 2000
+          });
+        }
       }
     } catch (error) {
       console.error('Failed to export song:', error);
@@ -98,7 +140,8 @@ export function ExportModal({ opened, onClose, sections }: ExportModalProps) {
           value={format}
           onChange={(value) => setFormat(value || 'freeshow')}
           data={[
-            { value: 'freeshow', label: 'Freeshow Text' }
+            { value: 'freeshow-text', label: 'FreeShow Text Format' },
+            { value: 'freeshow-show', label: 'FreeShow .show File' }
           ]}
         />
 
@@ -114,6 +157,11 @@ export function ExportModal({ opened, onClose, sections }: ExportModalProps) {
         />
 
         <Group justify="flex-end">
+          {exportType === 'file' && (
+            <Button onClick={handleExport} color="blue">
+              Save File
+            </Button>
+          )}
           <Button onClick={onClose}>
             Close
           </Button>

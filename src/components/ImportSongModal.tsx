@@ -1,13 +1,14 @@
 import * as React from 'react';
-import { Modal, Stack, Text, Textarea, Button, Group } from '@mantine/core';
+import { Modal, Stack, Text, Textarea, Button, Group, Tabs, FileButton, Box } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
+import { IconFileText, IconUpload } from '@tabler/icons-react';
 import { Section } from '../types/song';
-import { parseUltimateGuitarText } from '../utils/parsers';
+import { parseUltimateGuitarText, parseFreeshowText, parseShowFile } from '../utils/parsers';
 
 interface ImportSongModalProps {
   opened: boolean;
   onClose: () => void;
-  onImport: (sections: Section[]) => void;
+  onImport: (sections: Section[], metadata?: { title?: string; artist?: string }) => void;
 }
 
 export function ImportSongModal({ opened, onClose, onImport }: ImportSongModalProps) {
@@ -19,6 +20,7 @@ export function ImportSongModal({ opened, onClose, onImport }: ImportSongModalPr
     const lines = text.split('\n');
     let hasChordLine = false;
     let hasSection = false;
+    let hasInlineChords = false;
 
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i].trim();
@@ -29,18 +31,30 @@ export function ImportSongModal({ opened, onClose, onImport }: ImportSongModalPr
       if (/^[A-Ga-g][#mb\d+\s\/]*/.test(line)) {
         hasChordLine = true;
       }
+      // Check for inline chords like [G] or [Am] within lyrics (FreeShow format)
+      if (/\[([A-G][#b]?(?:maj|min|m|aug|dim|sus|add|M)?(?:\d+)?(?:\/[A-G][#b]?)?)\]/.test(line)) {
+        hasInlineChords = true;
+      }
+    }
+
+    if (hasSection && hasInlineChords) {
+      return 'freeshow';
     }
 
     if (hasSection && hasChordLine) {
       return 'ultimate-guitar';
     }
 
-    // For now, default to Ultimate Guitar
-    // TODO: Add detection for other formats
+    // Default to FreeShow if it has sections but format is unclear
+    if (hasSection) {
+      return 'freeshow';
+    }
+
+    // Default to Ultimate Guitar for backward compatibility
     return 'ultimate-guitar';
   };
 
-  const handleImport = async () => {
+  const handleTextImport = async () => {
     try {
       if (!importText.trim()) {
         notifications.show({
@@ -57,8 +71,9 @@ export function ImportSongModal({ opened, onClose, onImport }: ImportSongModalPr
       let sections: Section[] = [];
       if (format === 'ultimate-guitar') {
         sections = parseUltimateGuitarText(importText);
+      } else if (format === 'freeshow') {
+        sections = parseFreeshowText(importText);
       }
-      // TODO: Add support for other formats
 
       onImport(sections);
       setImportText('');
@@ -79,6 +94,86 @@ export function ImportSongModal({ opened, onClose, onImport }: ImportSongModalPr
     }
   };
 
+  const handleFileImport = async (file: File | null) => {
+    if (!file) return;
+    
+    try {
+      setIsLoading(true);
+      
+      // Read the file content as text
+      const fileText = await file.text();
+      
+      let sections: Section[] = [];
+      
+      // Determine the file type based on extension
+      const fileExtension = file.name.split('.').pop()?.toLowerCase();
+      
+      let metadata: { title?: string; artist?: string } | undefined;
+      
+      if (fileExtension === 'show') {
+        // Parse FreeShow .show file (JSON format)
+        console.log('Parsing .show file...');
+        
+        // Log the first part of the file content for debugging
+        console.log('File content preview:', fileText.substring(0, 200));
+        
+        try {
+          // Try to manually extract the title from the raw JSON
+          const rawData = JSON.parse(fileText);
+          if (Array.isArray(rawData) && rawData.length > 1 && rawData[1].name) {
+            console.log('Directly extracted title from JSON:', rawData[1].name);
+          }
+        } catch (e) {
+          console.error('Error parsing raw JSON:', e);
+        }
+        
+        const parsedShowFile = parseShowFile(fileText);
+        sections = parsedShowFile.sections;
+        
+        // Extract metadata from the show file
+        console.log('Parsed show file metadata:', parsedShowFile.title, parsedShowFile.artist);
+        
+        if (parsedShowFile.title || parsedShowFile.artist) {
+          metadata = {
+            title: parsedShowFile.title,
+            artist: parsedShowFile.artist
+          };
+          console.log('Setting metadata:', metadata);
+        }
+      } else {
+        // For text files, detect the format and parse accordingly
+        const format = detectFormat(fileText);
+        
+        if (format === 'ultimate-guitar') {
+          sections = parseUltimateGuitarText(fileText);
+        } else if (format === 'freeshow') {
+          sections = parseFreeshowText(fileText);
+        }
+      }
+      
+      if (sections.length === 0) {
+        throw new Error('No sections found in the imported file');
+      }
+      
+      console.log('Calling onImport with metadata:', metadata);
+      onImport(sections, metadata);
+      notifications.show({
+        title: 'Success',
+        message: `Imported ${file.name} successfully`,
+        color: 'green'
+      });
+    } catch (error) {
+      console.error('Failed to import song file:', error);
+      notifications.show({
+        title: 'Error',
+        message: 'Failed to import song file: ' + (error instanceof Error ? error.message : 'Unknown error'),
+        color: 'red'
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <Modal
       opened={opened}
@@ -86,26 +181,57 @@ export function ImportSongModal({ opened, onClose, onImport }: ImportSongModalPr
       title="Import Song"
       size="lg"
     >
-      <Stack>
-        <Text size="sm" c="dimmed">
-          Paste your song text below. Currently supports Ultimate Guitar format.
-        </Text>
-        <Textarea
-          value={importText}
-          onChange={(e) => setImportText(e.target.value)}
-          placeholder="Paste song text here..."
-          minRows={10}
-          autosize
-        />
-        <Group justify="flex-end">
-          <Button variant="light" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button onClick={handleImport} loading={isLoading}>
-            Import
-          </Button>
-        </Group>
-      </Stack>
+      <Tabs defaultValue="text">
+        <Tabs.List>
+          <Tabs.Tab value="text" leftSection={<IconFileText size="0.8rem" />}>
+            Text
+          </Tabs.Tab>
+          <Tabs.Tab value="file" leftSection={<IconUpload size="0.8rem" />}>
+            File
+          </Tabs.Tab>
+        </Tabs.List>
+
+        <Tabs.Panel value="text" pt="md">
+          <Stack>
+            <Text size="sm" c="dimmed">
+              Paste your song text below. Supports Ultimate Guitar and FreeShow formats.
+            </Text>
+            <Textarea
+              value={importText}
+              onChange={(e) => setImportText(e.target.value)}
+              placeholder="Paste song text here..."
+              minRows={10}
+              autosize
+            />
+            <Group justify="flex-end">
+              <Button variant="light" onClick={onClose}>
+                Cancel
+              </Button>
+              <Button onClick={handleTextImport} loading={isLoading}>
+                Import
+              </Button>
+            </Group>
+          </Stack>
+        </Tabs.Panel>
+
+        <Tabs.Panel value="file" pt="md">
+          <Stack>
+            <Text size="sm" c="dimmed">
+              Upload a song file. Supports .show (FreeShow), .txt, .cho, and .pro files.
+            </Text>
+            <Box py="md" style={{ display: 'flex', justifyContent: 'center' }}>
+              <FileButton onChange={handleFileImport} accept=".show,.txt,.cho,.pro">
+                {(props) => <Button {...props} loading={isLoading}>Select File</Button>}
+              </FileButton>
+            </Box>
+            <Group justify="flex-end">
+              <Button variant="light" onClick={onClose}>
+                Cancel
+              </Button>
+            </Group>
+          </Stack>
+        </Tabs.Panel>
+      </Tabs>
     </Modal>
   );
 }

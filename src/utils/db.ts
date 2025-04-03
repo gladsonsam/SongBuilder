@@ -14,7 +14,7 @@ export interface Song {
 }
 
 export interface Section {
-  type: 'verse' | 'chorus' | 'bridge';
+  type: 'verse' | 'chorus' | 'bridge' | 'tag';
   content: string;
   number?: number;
   chords: {

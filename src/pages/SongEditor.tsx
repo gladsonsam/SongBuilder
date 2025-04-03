@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { Stack, Title, TextInput, Button, Group, ActionIcon } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { IconArrowLeft, IconUpload, IconDownload } from '@tabler/icons-react';
-import { ImportSongModal } from '../components/ImportSongModal';
+import { UnifiedImportModal } from '../components/UnifiedImportModal';
 import { ExportModal } from '../components/ExportModal';
 import { getSong, saveSong, updateSong } from '../utils/db';
 import { SongSection } from '../components/SongSection';
@@ -49,8 +49,43 @@ export function SongEditor() {
     }
   }, [id]);
   
-  const handleImport = (sections: Section[]) => {
+  const handleImport = (sections: Section[], metadata?: { title?: string; artist?: string }) => {
+    // Update song sections
     setSong(prev => ({ ...prev, sections }));
+    
+    console.log('handleImport received metadata:', metadata);
+    
+    // If metadata is provided from the import (e.g., from .show files), update title and artist
+    if (metadata) {
+      console.log('Processing metadata in handleImport');
+      if (metadata.title) {
+        console.log('Setting title to:', metadata.title);
+        // Force a direct DOM update to ensure the title is set
+        setTimeout(() => {
+          setTitle(metadata.title || '');
+          // Also try to directly update the input field
+          const titleInput = document.querySelector('input[placeholder="Enter song title"]') as HTMLInputElement;
+          if (titleInput) {
+            titleInput.value = metadata.title || '';
+            console.log('Directly updated title input to:', metadata.title);
+          }
+        }, 100);
+      }
+      if (metadata.artist) {
+        console.log('Setting artist to:', metadata.artist);
+        // Force a direct DOM update to ensure the artist is set
+        setTimeout(() => {
+          setArtist(metadata.artist || '');
+          // Also try to directly update the input field
+          const artistInput = document.querySelector('input[placeholder="Enter artist name"]') as HTMLInputElement;
+          if (artistInput) {
+            artistInput.value = metadata.artist || '';
+            console.log('Directly updated artist input to:', metadata.artist);
+          }
+        }, 100);
+      }
+    }
+    
     setImportModalOpen(false);
   };
 
@@ -197,7 +232,7 @@ export function SongEditor() {
         ))}
       </Stack>
 
-      <ImportSongModal
+      <UnifiedImportModal
         opened={importModalOpen}
         onClose={() => setImportModalOpen(false)}
         onImport={handleImport}
