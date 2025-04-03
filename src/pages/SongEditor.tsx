@@ -49,16 +49,10 @@ export function SongEditor() {
     }
   }, [id]);
   
-  // No longer need these effects as we're using separate state for title and artist
-
-  // No longer need this function as we're loading directly in the useEffect
-
   const handleImport = (sections: Section[]) => {
     setSong(prev => ({ ...prev, sections }));
     setImportModalOpen(false);
   };
-
-  // No longer need these handlers as we're using the setTitle and setArtist functions directly
 
   const handleSave = async () => {
     setIsSaving(true);

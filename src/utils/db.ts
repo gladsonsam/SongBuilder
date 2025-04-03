@@ -57,7 +57,7 @@ export async function initDB(): Promise<IDBDatabase> {
       }
     };
 
-    request.onblocked = (event) => {
+    request.onblocked = () => {
       console.error('Database blocked. Please close other tabs using the app and reload.');
       reject(new Error('Database blocked'));
     };
