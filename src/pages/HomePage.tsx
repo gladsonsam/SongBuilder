@@ -151,7 +151,7 @@ export function HomePage() {
             </Group>
             
             <TextInput
-              placeholder="Search all songs..."
+              placeholder="Search titles, artists, or lyrics..."
               leftSection={<IconSearch size={16} />}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -170,10 +170,22 @@ export function HomePage() {
               // When searching, show all matching songs
               <Stack gap="sm">
                 {allSongs
-                  .filter(song => 
-                    song.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                    song.artist.toLowerCase().includes(searchQuery.toLowerCase())
-                  )
+                  .filter(song => {
+                    const query = searchQuery.toLowerCase();
+                    
+                    // Check title and artist
+                    if (
+                      song.title.toLowerCase().includes(query) || 
+                      song.artist.toLowerCase().includes(query)
+                    ) {
+                      return true;
+                    }
+                    
+                    // Check lyrics in all sections
+                    return song.sections.some(section => 
+                      section.content.toLowerCase().includes(query)
+                    );
+                  })
                   .map(song => (
                   <Paper
                     key={song.id}
@@ -201,10 +213,22 @@ export function HomePage() {
                     </Group>
                   </Paper>
                 ))}
-                {allSongs.filter(song => 
-                  song.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                  song.artist.toLowerCase().includes(searchQuery.toLowerCase())
-                ).length === 0 && (
+                {allSongs.filter(song => {
+                  const query = searchQuery.toLowerCase();
+                  
+                  // Check title and artist
+                  if (
+                    song.title.toLowerCase().includes(query) || 
+                    song.artist.toLowerCase().includes(query)
+                  ) {
+                    return true;
+                  }
+                  
+                  // Check lyrics in all sections
+                  return song.sections.some(section => 
+                    section.content.toLowerCase().includes(query)
+                  );
+                }).length === 0 && (
                   <Text c="dimmed" ta="center" py="xl">
                     No songs found matching '{searchQuery}'.
                   </Text>

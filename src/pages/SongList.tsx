@@ -1,9 +1,12 @@
 import * as React from 'react';
-import { Container, Title, Text, Button, Stack, Group, Paper, TextInput, ActionIcon, Skeleton, Checkbox, Menu } from '@mantine/core';
+import '../components/TagInput.css';
+import { ColoredTag } from '../components/ColoredTag';
+import { Container, Title, Text, Button, Stack, Group, Paper, TextInput, ActionIcon, Skeleton, Checkbox, Menu, MultiSelect } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { Link } from 'react-router-dom';
-import { IconPlus, IconSearch, IconTrash, IconEdit, IconDots, IconDownload, IconSortAscending, IconSortDescending } from '@tabler/icons-react';
+import { IconPlus, IconSearch, IconTrash, IconEdit, IconDots, IconDownload, IconSortAscending, IconSortDescending, IconTags } from '@tabler/icons-react';
 import { getAllSongs, deleteSong } from '../utils/db';
+import { getTagColor } from '../utils/tagColors';
 import type { Song } from '../utils/db';
 
 type SortField = 'title' | 'artist' | 'date';
@@ -16,6 +19,8 @@ export function SongList() {
   const [selectedSongs, setSelectedSongs] = React.useState<Set<string>>(new Set());
   const [sortField, setSortField] = React.useState<SortField>('date');
   const [sortDirection, setSortDirection] = React.useState<SortDirection>('desc');
+  const [selectedTags, setSelectedTags] = React.useState<string[]>([]);
+  const [availableTags, setAvailableTags] = React.useState<{value: string; label: string}[]>([]);
 
   // Load songs on mount and set up keyboard listener
   React.useEffect(() => {
@@ -52,6 +57,15 @@ export function SongList() {
       setIsLoading(true);
       const allSongs = await getAllSongs();
       setSongs(sortSongs(allSongs, sortField, sortDirection));
+      
+      // Extract all unique tags from songs
+      const tags = new Set<string>();
+      allSongs.forEach(song => {
+        if (song.tags && song.tags.length > 0) {
+          song.tags.forEach(tag => tags.add(tag));
+        }
+      });
+      setAvailableTags(Array.from(tags).sort().map(tag => ({ value: tag, label: tag })));
     } catch (error) {
       console.error('Failed to load songs:', error);
       notifications.show({
@@ -160,11 +174,105 @@ export function SongList() {
     }
   };
 
-  // Filter songs based on search query
-  const filteredSongs = songs.filter(song =>
-    song.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    song.artist.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // Parse hashtags from search query
+  const parseSearchQuery = (query: string) => {
+    const hashtagRegex = /#(\w+)/g;
+    const hashtags: string[] = [];
+    let match;
+    let plainQuery = query;
+    
+    // Extract hashtags from the query
+    while ((match = hashtagRegex.exec(query)) !== null) {
+      hashtags.push(match[1].toLowerCase());
+      // Remove the hashtag from the plain query
+      plainQuery = plainQuery.replace(match[0], '');
+    }
+    
+    return {
+      hashtags,
+      plainQuery: plainQuery.trim()
+    };
+  };
+
+  // Handle search query changes and extract hashtags
+  const handleSearchChange = (value: string) => {
+    setSearchQuery(value);
+    
+    // Extract hashtags and add them to selected tags
+    const { hashtags } = parseSearchQuery(value);
+    if (hashtags.length > 0) {
+      // Find matching tags (case insensitive)
+      const matchingTags = availableTags
+        .map(tag => tag.value)
+        .filter(tag => 
+          hashtags.some(hashtag => 
+            tag.toLowerCase().includes(hashtag)
+          )
+        );
+      
+      // Add matching tags to selected tags if not already there
+      const newSelectedTags = [...selectedTags];
+      matchingTags.forEach(tag => {
+        if (!selectedTags.includes(tag)) {
+          newSelectedTags.push(tag);
+        }
+      });
+      
+      if (newSelectedTags.length !== selectedTags.length) {
+        setSelectedTags(newSelectedTags);
+      }
+    }
+  };
+
+  // Filter songs based on search query, including lyrics and tags
+  const filteredSongs = songs.filter(song => {
+    // First filter by tags if any are selected
+    if (selectedTags.length > 0) {
+      if (!song.tags || song.tags.length === 0) return false;
+      
+      // Check if song has at least one of the selected tags
+      const hasSelectedTag = selectedTags.some(tag => 
+        song.tags?.includes(tag)
+      );
+      
+      if (!hasSelectedTag) return false;
+    }
+    
+    // Then filter by search query if present
+    if (searchQuery) {
+      const { plainQuery, hashtags } = parseSearchQuery(searchQuery);
+      
+      // If we have hashtags but no plain query, we've already filtered by tags above
+      if (hashtags.length > 0 && !plainQuery) {
+        return true;
+      }
+      
+      // If we have a plain query, search by it
+      if (plainQuery) {
+        const query = plainQuery.toLowerCase();
+        
+        // Check title and artist
+        if (
+          song.title.toLowerCase().includes(query) || 
+          song.artist.toLowerCase().includes(query)
+        ) {
+          return true;
+        }
+        
+        // Check tags (for partial matches not covered by hashtags)
+        if (song.tags && song.tags.some(tag => tag.toLowerCase().includes(query))) {
+          return true;
+        }
+        
+        // Check lyrics in all sections
+        return song.sections.some(section => 
+          section.content.toLowerCase().includes(query)
+        );
+      }
+    }
+    
+    return true; // If no search query, include all songs that passed tag filter
+  });
 
   return (
     <Container size="lg">
@@ -203,14 +311,58 @@ export function SongList() {
 
         <Group align="flex-end">
           <TextInput
-            placeholder="Search songs..."
+            placeholder="Search titles, artists, or lyrics..."
             leftSection={<IconSearch size={16} />}
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={(e) => handleSearchChange(e.target.value)}
             style={{ flex: 1 }}
             autoFocus
             id="songs-search"
           />
+          
+          <MultiSelect
+            data={availableTags}
+            value={selectedTags}
+            onChange={setSelectedTags}
+            placeholder="Filter by tags"
+            searchable
+            clearable
+            leftSection={<IconTags size={16} />}
+            renderOption={({ option }) => (
+              <Group gap="xs">
+                <div
+                  style={{
+                    width: 12,
+                    height: 12,
+                    borderRadius: '50%',
+                    backgroundColor: `var(--mantine-color-${getTagColor(option.value)}-filled)`
+                  }}
+                />
+                <span>{option.label}</span>
+              </Group>
+            )}
+            styles={{
+              pill: {
+                display: 'none'  // Hide the default pills
+              }
+            }}
+          />
+          {/* Display selected tags with colors */}
+          <Group gap="xs" mt="xs">
+            {selectedTags.map((tag) => (
+              <ColoredTag
+                key={tag}
+                tag={tag}
+                size="sm"
+                variant="filled"
+                onClick={() => {
+                  // Remove this tag from selection when clicked
+                  setSelectedTags(selectedTags.filter(t => t !== tag));
+                }}
+                showColorSwatch={false}
+              />
+            ))}
+          </Group>
           
           {filteredSongs.length > 0 && (
             <Checkbox
@@ -296,6 +448,27 @@ export function SongList() {
                       <Text size="xs" c="dimmed">
                         Last updated: {new Date(song.updatedAt).toLocaleString()}
                       </Text>
+                      {song.tags && song.tags.length > 0 && (
+                        <Group gap="xs" mt="xs">
+                          {song.tags.map((tag, index) => (
+                            <ColoredTag
+                              key={index}
+                              tag={tag}
+                              size="sm"
+                              variant="light"
+                              onClick={() => {
+                                if (!selectedTags.includes(tag)) {
+                                  setSelectedTags([...selectedTags, tag]);
+                                }
+                              }}
+                              onColorChange={() => {
+                                // Force re-render
+                                setSongs([...songs]);
+                              }}
+                            />
+                          ))}
+                        </Group>
+                      )}
                     </Stack>
                   </Group>
                   <Group>

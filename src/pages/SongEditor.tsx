@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Stack, Title, TextInput, Button, Group, ActionIcon } from '@mantine/core';
+import { Stack, Title, TextInput, Button, Group, ActionIcon, Box, Text } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { IconArrowLeft, IconUpload, IconDownload } from '@tabler/icons-react';
 import { UnifiedImportModal } from '../components/UnifiedImportModal';
@@ -9,6 +9,7 @@ import { getSong, saveSong, updateSong } from '../utils/db';
 import { SongSection } from '../components/SongSection';
 import { Section, Song } from '../types/song';
 import TransposeControl from '../components/TransposeControl';
+import { TagInput } from '../components/TagInput';
 import { useSongs } from '../context/SongContext';
 import { detectKey } from '../utils/transpose';
 
@@ -19,10 +20,11 @@ export function SongEditor() {
   const { updateSong: updateContextSong, currentTranspose } = useSongs();
 
   // State
-  const [song, setSong] = useState<Song>({ title: '', artist: '', sections: [] });
+  const [song, setSong] = useState<Song>({ title: '', artist: '', sections: [], tags: [] });
   // Add separate state for title and artist to ensure they can be edited independently
   const [title, setTitle] = useState('');
   const [artist, setArtist] = useState('');
+  const [tags, setTags] = useState<string[]>([]);
   const [importModalOpen, setImportModalOpen] = useState(false);
   const [exportModalOpen, setExportModalOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -37,6 +39,7 @@ export function SongEditor() {
           // Initialize the separate title and artist state
           setTitle(loadedSong.title || '');
           setArtist(loadedSong.artist || '');
+          setTags(loadedSong.tags || []);
         }
       }).catch(error => {
         console.error('Failed to load song:', error);
@@ -96,7 +99,8 @@ export function SongEditor() {
       const updatedSong = {
         ...song,
         title: title,  // Use the separate title state
-        artist: artist // Use the separate artist state
+        artist: artist, // Use the separate artist state
+        tags: tags // Use the separate tags state
       };
       
       // If this is the first save, store the original sections
@@ -137,6 +141,7 @@ export function SongEditor() {
           title: updatedSong.title,
           artist: updatedSong.artist,
           sections: updatedSong.sections,
+          tags: updatedSong.tags,
           createdAt: updatedSong.createdAt || new Date().toISOString(),
           updatedAt: new Date().toISOString()
         });
@@ -147,7 +152,8 @@ export function SongEditor() {
         const newId = await saveSong({
           title: updatedSong.title,
           artist: updatedSong.artist,
-          sections: updatedSong.sections
+          sections: updatedSong.sections,
+          tags: updatedSong.tags
         });
         navigate(`/songs/${newId}`);
       }
@@ -219,6 +225,24 @@ export function SongEditor() {
         />
         {id && <TransposeControl />}
       </Group>
+      
+      <Box>
+        <TagInput
+          label="Tags"
+          value={tags}
+          onChange={setTags}
+          placeholder="Add tags like 'adoration', 'holy'..."
+          suggestions={[
+            'Adoration', 'Holy', 'Praise', 'Worship', 'Prayer',
+            'Communion', 'Offering', 'Healing', 'Salvation', 'Victory',
+            'Christmas', 'Easter', 'Thanksgiving', 'Fast', 'Slow',
+            'Contemporary', 'Traditional', 'Hymn', 'Chorus'
+          ]}
+        />
+        <Text size="xs" c="dimmed" mt={5}>
+          Press Enter or click + to add a tag. Tags help organize and find your songs.
+        </Text>
+      </Box>
 
       <Stack gap="md">
         {song.sections.map((section, index) => (

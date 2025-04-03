@@ -22,4 +22,5 @@ export interface Song {
   originalKey?: string;
   currentTranspose?: string;
   originalSections?: Section[]; // Store original sections before transposition
+  tags?: string[]; // Array of tags for categorizing songs
 }

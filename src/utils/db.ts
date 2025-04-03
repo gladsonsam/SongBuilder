@@ -11,6 +11,7 @@ export interface Song {
   sections: Section[];
   createdAt: string;
   updatedAt: string;
+  tags?: string[]; // Array of tags for categorizing songs
 }
 
 export interface Section {
@@ -81,7 +82,8 @@ export async function saveSong(song: Omit<Song, 'id' | 'createdAt' | 'updatedAt'
         ...song,
         id: Math.random().toString(36).substr(2, 9),
         createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
+        updatedAt: new Date().toISOString(),
+        tags: song.tags || [] // Initialize with empty array if not provided
       };
 
       const request = store.add(songWithMetadata);
