@@ -1,0 +1,85 @@
+/**
+ * Browser Compatibility Fixes
+ * This file addresses specific CSS compatibility issues across different browsers
+ */
+
+/* Fix for '-moz-appearance' not supported by Chrome, Edge, Safari */
+.moz-appearance-none,
+[style*="-moz-appearance"] {
+  -moz-appearance: none;
+  appearance: none;
+}
+
+/* Fix for '-webkit-text-size-adjust' not supported by Chrome, Chrome Android, Edge, Firefox, Safari */
+.webkit-text-size-adjust,
+[style*="-webkit-text-size-adjust"] {
+  -webkit-text-size-adjust: none;
+  text-size-adjust: none;
+}
+
+/* Fix for 'user-select' not supported by Safari */
+.user-select-none,
+[style*="user-select"] {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+/* Fix for 'scrollbar-width' not supported by Safari */
+.scrollbar-width-thin,
+[style*="scrollbar-width"] {
+  scrollbar-width: thin;
+}
+
+/* Webkit scrollbar styling for Safari */
+.scrollbar-width-thin::-webkit-scrollbar,
+[style*="scrollbar-width"]::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.scrollbar-width-thin::-webkit-scrollbar-thumb,
+[style*="scrollbar-width"]::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+}
+
+/* Fix for 'text-wrap' not supported by Safari < 17.4 */
+.text-wrap-wrap,
+[style*="text-wrap"] {
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  text-wrap: wrap;
+}
+
+/* Fix for 'backdrop-filter' vendor prefixing */
+.backdrop-filter,
+[style*="backdrop-filter"] {
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+}
+
+/* Fix for 'transform' vendor prefixing */
+.transform,
+[style*="transform"] {
+  -webkit-transform: translateZ(0);
+  -moz-transform: translateZ(0);
+  -ms-transform: translateZ(0);
+  transform: translateZ(0);
+}
+
+/* Fix for 'background-clip' vendor prefixing */
+.background-clip,
+[style*="background-clip"] {
+  -webkit-background-clip: padding-box;
+  background-clip: padding-box;
+}
+
+/* Fix for 'text-size-adjust' vendor prefixing */
+.text-size-adjust,
+[style*="text-size-adjust"] {
+  -webkit-text-size-adjust: 100%;
+  -moz-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
