@@ -3,17 +3,20 @@ import '../components/TagInput.css';
 import { ColoredTag } from '../components/ColoredTag';
 import { Container, Title, Text, Button, Stack, Group, Paper, TextInput, ActionIcon, Skeleton, Checkbox, Menu, MultiSelect } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
-import { Link } from 'react-router-dom';
-import { IconPlus, IconSearch, IconTrash, IconEdit, IconDots, IconDownload, IconSortAscending, IconSortDescending, IconTags, IconDatabase } from '@tabler/icons-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { IconPlus, IconSearch, IconTrash, IconEdit, IconDots, IconDownload, IconSortAscending, IconSortDescending, IconTags, IconDatabase, IconUpload } from '@tabler/icons-react';
 import { DatabaseTools } from '../components/DatabaseTools';
-import { getAllSongs, deleteSong } from '../utils/db';
+import { UnifiedImportModal } from '../components/UnifiedImportModal';
+import { getAllSongs, deleteSong, saveSong } from '../utils/db';
 import { getTagColor } from '../utils/tagColors';
+import { toTitleCase } from '../utils/formatters';
 import type { Song } from '../utils/db';
 
 type SortField = 'title' | 'artist' | 'date';
 type SortDirection = 'asc' | 'desc';
 
 export function SongList() {
+  const navigate = useNavigate();
   const [songs, setSongs] = React.useState<Song[]>([]);
   const [searchQuery, setSearchQuery] = React.useState('');
   const [isLoading, setIsLoading] = React.useState(true);
@@ -23,6 +26,7 @@ export function SongList() {
   const [selectedTags, setSelectedTags] = React.useState<string[]>([]);
   const [availableTags, setAvailableTags] = React.useState<{value: string; label: string}[]>([]);
   const [dbToolsOpen, setDbToolsOpen] = React.useState(false);
+  const [importModalOpen, setImportModalOpen] = React.useState(false);
 
   // Load songs on mount and set up keyboard listener
   React.useEffect(() => {
@@ -338,6 +342,14 @@ export function SongList() {
               New Song
             </Button>
             <Button
+              variant="filled"
+              color="blue"
+              leftSection={<IconUpload size={16} />}
+              onClick={() => setImportModalOpen(true)}
+            >
+              Import Song
+            </Button>
+            <Button
               variant="light"
               leftSection={<IconDatabase size={16} />}
               onClick={() => setDbToolsOpen(true)}
@@ -565,6 +577,44 @@ export function SongList() {
           opened={dbToolsOpen}
           onClose={() => setDbToolsOpen(false)}
           onComplete={loadSongs}
+        />
+        
+        {/* Import Song Modal */}
+        <UnifiedImportModal
+          opened={importModalOpen}
+          onClose={() => setImportModalOpen(false)}
+          onImport={async (sections, metadata) => {
+            try {
+              // Create a new song from the imported sections
+              const newSong = {
+                title: toTitleCase(metadata?.title || 'Imported Song'),
+                artist: metadata?.artist || 'Unknown Artist',
+                sections: sections,
+                tags: []
+              };
+              
+              // Add the song to the database
+              const songId = await saveSong(newSong);
+              
+              // Show success notification
+              notifications.show({
+                title: 'Success',
+                message: `Imported song: ${newSong.title}`,
+                color: 'green'
+              });
+              
+              // Navigate to the song editor for the newly imported song
+              navigate(`/songs/${songId}`);
+            } catch (error) {
+              console.error('Failed to import song:', error);
+              notifications.show({
+                title: 'Error',
+                message: 'Failed to import song',
+                color: 'red'
+              });
+            }
+          }}
+          onBatchComplete={loadSongs}
         />
       </Stack>
     </Container>

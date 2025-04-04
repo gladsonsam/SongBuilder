@@ -3,7 +3,9 @@ import { Modal, Stack, Text, Textarea, Button, Group, Tabs, FileButton, Box } fr
 import { notifications } from '@mantine/notifications';
 import { IconFileText, IconUpload } from '@tabler/icons-react';
 import { Section } from '../types/song';
-import { parseUltimateGuitarText, parseFreeshowText, parseShowFile } from '../utils/parsers';
+import { parseUltimateGuitarText, parseFreeshowText, parseShowFile, parseXMLFile } from '../utils/parsers';
+import { NoChordWarningModal } from './NoChordWarningModal';
+import { toTitleCase } from '../utils/formatters';
 
 interface ImportSongModalProps {
   opened: boolean;
@@ -14,6 +16,11 @@ interface ImportSongModalProps {
 export function ImportSongModal({ opened, onClose, onImport }: ImportSongModalProps) {
   const [importText, setImportText] = React.useState('');
   const [isLoading, setIsLoading] = React.useState(false);
+  const [showNoChordWarning, setShowNoChordWarning] = React.useState(false);
+  const [pendingImport, setPendingImport] = React.useState<{
+    sections: Section[],
+    metadata?: { title?: string; artist?: string }
+  } | null>(null);
 
   const detectFormat = (text: string): 'ultimate-guitar' | 'freeshow' | 'openlp' => {
     // Check for Ultimate Guitar format (chords above lyrics)
@@ -140,6 +147,28 @@ export function ImportSongModal({ opened, onClose, onImport }: ImportSongModalPr
           };
           console.log('Setting metadata:', metadata);
         }
+      } else if (fileExtension === 'xml') {
+        // Parse XML file
+        console.log('Parsing .xml file...');
+        
+        try {
+          const parsedXMLFile = parseXMLFile(fileText);
+          sections = parsedXMLFile.sections;
+          
+          // Extract metadata from the XML file
+          console.log('Parsed XML file metadata:', parsedXMLFile.title, parsedXMLFile.artist);
+          
+          if (parsedXMLFile.title || parsedXMLFile.artist) {
+            metadata = {
+              title: parsedXMLFile.title ? toTitleCase(parsedXMLFile.title) : '',
+              artist: parsedXMLFile.artist || ''
+            };
+            console.log('Setting metadata:', metadata);
+          }
+        } catch (error) {
+          console.error('Error parsing XML file:', error);
+          throw new Error('Failed to parse XML file: ' + (error instanceof Error ? error.message : 'Unknown error'));
+        }
       } else {
         // For text files, detect the format and parse accordingly
         const format = detectFormat(fileText);
@@ -155,13 +184,25 @@ export function ImportSongModal({ opened, onClose, onImport }: ImportSongModalPr
         throw new Error('No sections found in the imported file');
       }
       
-      console.log('Calling onImport with metadata:', metadata);
-      onImport(sections, metadata);
-      notifications.show({
-        title: 'Success',
-        message: `Imported ${file.name} successfully`,
-        color: 'green'
-      });
+      // Check if this is an XML file with no chords
+      const isXmlFile = fileExtension === 'xml';
+      const hasNoChords = isXmlFile && sections.every(section => !section.chords || section.chords.length === 0);
+      
+      if (isXmlFile && hasNoChords) {
+        console.log('XML file has no chords, showing warning');
+        // Store the import data and show the warning
+        setPendingImport({ sections, metadata });
+        setShowNoChordWarning(true);
+      } else {
+        // Proceed with import directly
+        console.log('Calling onImport with metadata:', metadata);
+        onImport(sections, metadata);
+        notifications.show({
+          title: 'Success',
+          message: `Imported ${file.name} successfully`,
+          color: 'green'
+        });
+      }
     } catch (error) {
       console.error('Failed to import song file:', error);
       notifications.show({
@@ -175,12 +216,13 @@ export function ImportSongModal({ opened, onClose, onImport }: ImportSongModalPr
   };
 
   return (
-    <Modal
-      opened={opened}
-      onClose={onClose}
-      title="Import Song"
-      size="lg"
-    >
+    <>
+      <Modal
+        opened={opened}
+        onClose={onClose}
+        title="Import Song"
+        size="lg"
+      >
       <Tabs defaultValue="text">
         <Tabs.List>
           <Tabs.Tab value="text" leftSection={<IconFileText size="0.8rem" />}>
@@ -217,10 +259,10 @@ export function ImportSongModal({ opened, onClose, onImport }: ImportSongModalPr
         <Tabs.Panel value="file" pt="md">
           <Stack>
             <Text size="sm" c="dimmed">
-              Upload a song file. Supports .show (FreeShow), .txt, .cho, and .pro files.
+              Upload a song file. Supports .show (FreeShow), .xml, .txt, .cho, and .pro files.
             </Text>
             <Box py="md" style={{ display: 'flex', justifyContent: 'center' }}>
-              <FileButton onChange={handleFileImport} accept=".show,.txt,.cho,.pro">
+              <FileButton onChange={handleFileImport} accept=".show,.xml,.txt,.cho,.pro">
                 {(props) => <Button {...props} loading={isLoading}>Select File</Button>}
               </FileButton>
             </Box>
@@ -232,6 +274,31 @@ export function ImportSongModal({ opened, onClose, onImport }: ImportSongModalPr
           </Stack>
         </Tabs.Panel>
       </Tabs>
-    </Modal>
+      </Modal>
+      
+      {/* No Chord Warning Modal */}
+      <NoChordWarningModal
+        opened={showNoChordWarning}
+        onClose={() => setShowNoChordWarning(false)}
+        songTitle={pendingImport?.metadata?.title || 'Untitled Song'}
+        onCancel={() => {
+          setShowNoChordWarning(false);
+          setPendingImport(null);
+        }}
+        onContinue={() => {
+          if (pendingImport) {
+            // Proceed with the import
+            onImport(pendingImport.sections, pendingImport.metadata);
+            notifications.show({
+              title: 'Success',
+              message: `Imported ${pendingImport.metadata?.title || 'song'} successfully`,
+              color: 'green'
+            });
+            setShowNoChordWarning(false);
+            setPendingImport(null);
+          }
+        }}
+      />
+    </>
   );
 }

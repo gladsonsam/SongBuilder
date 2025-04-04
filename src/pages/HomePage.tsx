@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { IconPlus, IconUpload, IconClock, IconSearch } from '@tabler/icons-react';
 import { UnifiedImportModal } from '../components/UnifiedImportModal';
 import { getAllSongs, saveSong } from '../utils/db';
+import { toTitleCase } from '../utils/formatters';
 import type { Song, Section } from '../types/song';
 
 export function HomePage() {
@@ -68,7 +69,7 @@ export function HomePage() {
       
       // Create a new song with the imported sections and metadata if available
       const newId = await saveSong({
-        title: metadata?.title || 'New Song',
+        title: toTitleCase(metadata?.title || 'New Song'),
         artist: metadata?.artist || '',
         sections
       });

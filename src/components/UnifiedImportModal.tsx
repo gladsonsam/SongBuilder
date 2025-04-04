@@ -2,8 +2,10 @@ import * as React from 'react';
 import { Modal, Stack, Text, Textarea, Button, Group, Tabs, FileButton, Box, Progress } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { IconFileText, IconUpload, IconCheck, IconX } from '@tabler/icons-react';
-import { parseUltimateGuitarText, parseFreeshowText, parseShowFile } from '../utils/parsers';
+import { parseUltimateGuitarText, parseFreeshowText, parseShowFile, parseXMLFile } from '../utils/parsers';
 import { saveSong } from '../utils/db';
+import { NoChordWarningModal } from './NoChordWarningModal';
+import { toTitleCase } from '../utils/formatters';
 
 interface UnifiedImportModalProps {
   opened: boolean;
@@ -25,6 +27,12 @@ export function UnifiedImportModal({ opened, onClose, onImport, onBatchComplete 
   const [results, setResults] = React.useState<ImportResult[]>([]);
   const [progress, setProgress] = React.useState(0);
   const [isBatchMode, setIsBatchMode] = React.useState(false);
+  const [showNoChordWarning, setShowNoChordWarning] = React.useState(false);
+  const [pendingImport, setPendingImport] = React.useState<{
+    sections: any[],
+    metadata?: { title?: string; artist?: string },
+    fileName: string
+  } | null>(null);
 
   // Reset state when modal opens
   React.useEffect(() => {
@@ -159,7 +167,7 @@ export function UnifiedImportModal({ opened, onClose, onImport, onBatchComplete 
           
           // Save as a new song
           const newId = await saveSong({
-            title: title || file.name.replace('.show', ''),
+            title: toTitleCase(title || file.name.replace('.show', '')),
             artist: artist || '',
             sections
           });
@@ -172,6 +180,47 @@ export function UnifiedImportModal({ opened, onClose, onImport, onBatchComplete 
           });
           
           importedCount++;
+        } else if (fileExtension === 'xml') {
+          // Read file content
+          const fileText = await file.text();
+          
+          try {
+            // Parse the XML file
+            const parsedXMLFile = parseXMLFile(fileText);
+            const { sections, title, artist } = parsedXMLFile;
+            
+            if (sections.length === 0) {
+              newResults.push({
+                fileName: file.name,
+                status: 'error',
+                message: 'No sections found in file'
+              });
+              continue;
+            }
+            
+            // Save as a new song
+            const newId = await saveSong({
+              title: title || file.name.replace('.xml', ''),
+              artist: artist || '',
+              sections
+            });
+            
+            newResults.push({
+              fileName: file.name,
+              status: 'success',
+              message: 'Imported successfully',
+              songId: newId
+            });
+            
+            importedCount++;
+          } catch (error) {
+            console.error(`Error parsing XML file ${file.name}:`, error);
+            newResults.push({
+              fileName: file.name,
+              status: 'error',
+              message: 'Failed to parse XML file: ' + (error instanceof Error ? error.message : 'Unknown error')
+            });
+          }
         } else {
           // For other file types
           const fileText = await file.text();
@@ -267,8 +316,20 @@ export function UnifiedImportModal({ opened, onClose, onImport, onBatchComplete 
         // Extract metadata from the show file
         if (parsedShowFile.title || parsedShowFile.artist) {
           metadata = {
-            title: parsedShowFile.title,
-            artist: parsedShowFile.artist
+            title: parsedShowFile.title ? toTitleCase(parsedShowFile.title) : '',
+            artist: parsedShowFile.artist || ''
+          };
+        }
+      } else if (fileExtension === 'xml') {
+        // Parse XML file
+        const parsedXMLFile = parseXMLFile(fileText);
+        sections = parsedXMLFile.sections;
+        
+        // Extract metadata from the XML file
+        if (parsedXMLFile.title || parsedXMLFile.artist) {
+          metadata = {
+            title: parsedXMLFile.title ? toTitleCase(parsedXMLFile.title) : '',
+            artist: parsedXMLFile.artist || ''
           };
         }
       } else {
@@ -286,13 +347,25 @@ export function UnifiedImportModal({ opened, onClose, onImport, onBatchComplete 
         throw new Error('No sections found in the imported file');
       }
       
-      onImport(sections, metadata);
-      onClose();
-      notifications.show({
-        title: 'Success',
-        message: `Imported ${file.name} successfully`,
-        color: 'green'
-      });
+      // Check if this is an XML file with no chords
+      const isXmlFile = fileExtension === 'xml';
+      const hasNoChords = isXmlFile && sections.every(section => !section.chords || section.chords.length === 0);
+      
+      if (isXmlFile && hasNoChords) {
+        console.log('XML file has no chords, showing warning');
+        // Store the import data and show the warning
+        setPendingImport({ sections, metadata, fileName: file.name });
+        setShowNoChordWarning(true);
+      } else {
+        // Proceed with import directly
+        onImport(sections, metadata);
+        onClose();
+        notifications.show({
+          title: 'Success',
+          message: `Imported ${file.name} successfully`,
+          color: 'green'
+        });
+      }
     } catch (error) {
       console.error('Failed to import song file:', error);
       notifications.show({
@@ -315,14 +388,15 @@ export function UnifiedImportModal({ opened, onClose, onImport, onBatchComplete 
   };
 
   return (
-    <Modal
-      opened={opened}
-      onClose={handleClose}
-      title="Import Song"
-      size="lg"
-      closeOnClickOutside={!isLoading}
-      closeOnEscape={!isLoading}
-    >
+    <>
+      <Modal
+        opened={opened}
+        onClose={handleClose}
+        title="Import Song"
+        size="lg"
+        closeOnClickOutside={!isLoading}
+        closeOnEscape={!isLoading}
+      >
       {!isBatchMode ? (
         <Tabs defaultValue="text">
           <Tabs.List>
@@ -360,11 +434,11 @@ export function UnifiedImportModal({ opened, onClose, onImport, onBatchComplete 
           <Tabs.Panel value="file" pt="md">
             <Stack>
               <Text size="sm" c="dimmed">
-                Upload song files. Supports .show (FreeShow), .txt, .cho, and .pro files.
+                Upload song files. Supports .show (FreeShow), .xml, .txt, .cho, and .pro files.
                 Select multiple files to batch import.
               </Text>
               <Box py="md" style={{ display: 'flex', justifyContent: 'center' }}>
-                <FileButton onChange={handleFileImport} accept=".show,.txt,.cho,.pro" multiple>
+                <FileButton onChange={handleFileImport} accept=".show,.xml,.txt,.cho,.pro" multiple>
                   {(props) => <Button {...props} loading={isLoading}>Select File(s)</Button>}
                 </FileButton>
               </Box>
@@ -427,6 +501,32 @@ export function UnifiedImportModal({ opened, onClose, onImport, onBatchComplete 
           </Group>
         </Stack>
       )}
-    </Modal>
+      </Modal>
+      
+      {/* No Chord Warning Modal */}
+      <NoChordWarningModal
+        opened={showNoChordWarning}
+        onClose={() => setShowNoChordWarning(false)}
+        songTitle={pendingImport?.metadata?.title || 'Untitled Song'}
+        onCancel={() => {
+          setShowNoChordWarning(false);
+          setPendingImport(null);
+        }}
+        onContinue={() => {
+          if (pendingImport) {
+            // Proceed with the import
+            onImport(pendingImport.sections, pendingImport.metadata);
+            notifications.show({
+              title: 'Success',
+              message: `Imported ${pendingImport.fileName} successfully`,
+              color: 'green'
+            });
+            onClose();
+            setShowNoChordWarning(false);
+            setPendingImport(null);
+          }
+        }}
+      />
+    </>
   );
 }
