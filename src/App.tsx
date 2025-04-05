@@ -1,4 +1,4 @@
-import * as React from 'react';
+// React is used implicitly by JSX
 import { MantineProvider, AppShell } from '@mantine/core';
 import { Notifications } from '@mantine/notifications';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';

@@ -6,6 +6,7 @@ import { Song as SongType, Section } from '../types/song';
 // Extended Song type with originalKey for transposing
 export interface Song extends SongType {
   originalKey?: string;
+  notes?: string; // Rich text notes for the song
 }
 
 interface SongContextType {

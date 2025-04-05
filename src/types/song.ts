@@ -23,4 +23,5 @@ export interface Song {
   currentTranspose?: string;
   originalSections?: Section[]; // Store original sections before transposition
   tags?: string[]; // Array of tags for categorizing songs
+  notes?: string; // Rich text notes for the song
 }

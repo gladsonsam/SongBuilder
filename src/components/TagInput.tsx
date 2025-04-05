@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { Badge, CloseButton, Group, Text, ActionIcon } from '@mantine/core';
-import { IconPlus, IconColorSwatch } from '@tabler/icons-react';
+import { IconColorSwatch } from '@tabler/icons-react';
 import { getTagColor, changeTagColor } from '../utils/tagColors';
 import './TagInput.css';
 

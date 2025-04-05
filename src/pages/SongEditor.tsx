@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Stack, Title, TextInput, Button, Group, ActionIcon, Text, Paper, Modal, Grid, Menu, Tooltip } from '@mantine/core';
+import { Stack, Title, TextInput, Button, Group, ActionIcon, Text, Paper, Modal, Grid, Menu, Tooltip, Tabs } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
-import { IconArrowLeft, IconUpload, IconDownload, IconMusic, IconUser, IconPlus, IconArrowUp, IconArrowDown, IconTrash } from '@tabler/icons-react';
+import { IconArrowLeft, IconUpload, IconDownload, IconMusic, IconPlus, IconArrowUp, IconArrowDown, IconTrash, IconNotes } from '@tabler/icons-react';
 import '../components/SectionControls.css';
+import { ArtistInput } from '../components/ArtistInput';
 import { UnifiedImportModal } from '../components/UnifiedImportModal';
 import { ExportModal } from '../components/ExportModal';
 import { getSong, saveSong, updateSong } from '../utils/db';
@@ -15,6 +16,7 @@ import TransposeControl from '../components/TransposeControl';
 import { TagInput } from '../components/TagInput';
 import { useSongs } from '../context/SongContext';
 import { detectKey } from '../utils/transpose';
+import { SongNotes } from '../components/SongNotes';
 
 export function SongEditor() {
   const navigate = useNavigate();
@@ -28,9 +30,12 @@ export function SongEditor() {
   const [title, setTitle] = useState('');
   const [artist, setArtist] = useState('');
   const [tags, setTags] = useState<string[]>([]);
+  const [notes, setNotes] = useState('');
   const [importModalOpen, setImportModalOpen] = useState(false);
   const [exportModalOpen, setExportModalOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [contentChanged, setContentChanged] = useState(false);
+  const [activeTab, setActiveTab] = useState<string | null>('sections');
 
   const [editingSectionIndex, setEditingSectionIndex] = useState<number | null>(null);
 
@@ -71,6 +76,7 @@ export function SongEditor() {
           setTitle(loadedSong.title || '');
           setArtist(loadedSong.artist || '');
           setTags(loadedSong.tags || []);
+          setNotes(loadedSong.notes || '');
         }
       }).catch(error => {
         console.error('Failed to load song:', error);
@@ -83,17 +89,48 @@ export function SongEditor() {
     }
   }, [id]);
   
-  // Set up immediate autosave
+  // Set up autosave timer (every 2 minutes) and immediate save on navigation
   useEffect(() => {
     // Don't autosave if we're just loading the song initially
     if (!song.id && !title && !artist && song.sections.length === 0) {
       return;
     }
     
-    // Save immediately after any change
-    autoSave();
+    // Set up a timer to save every 2 minutes
+    const autoSaveTimer = setInterval(() => {
+      console.log('Autosaving (2-minute interval)');
+      autoSave();
+    }, 2 * 60 * 1000); // 2 minutes in milliseconds
     
-  }, [song, title, artist, tags]); // Trigger autosave when these values change
+    // Set up event listener for page navigation/close
+    const handleBeforeUnload = () => {
+      console.log('Saving before navigation');
+      autoSave();
+    };
+    
+    // Add event listeners for navigation away
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    
+    // Clean up timer and event listeners when component unmounts
+    return () => {
+      clearInterval(autoSaveTimer);
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      // Save one last time when leaving the editor
+      autoSave();
+    };
+  }, []); // Empty dependency array means this only runs once on mount/unmount
+  
+  // Set up content change detection for manual saves
+  useEffect(() => {
+    // Don't autosave if we're just loading the song initially
+    if (!song.id && !title && !artist && song.sections.length === 0) {
+      return;
+    }
+    
+    // Set a flag that content has changed and needs saving
+    setContentChanged(true);
+    
+  }, [song, title, artist, tags, notes]); // Track when content changes
   
   const handleImport = (sections: Section[], metadata?: { title?: string; artist?: string }) => {
     // Update song sections
@@ -163,6 +200,7 @@ export function SongEditor() {
   // Autosave function
   const autoSave = async () => {
     if (isSaving) return; // Prevent multiple simultaneous saves
+    if (!contentChanged) return; // Don't save if nothing has changed
     
     setIsSaving(true);
     try {
@@ -175,6 +213,7 @@ export function SongEditor() {
         title: title,  // Use the separate title state
         artist: artist, // Use the separate artist state
         tags: tags, // Use the separate tags state
+        notes: notes, // Use the separate notes state
         sections: numberedSections // Use the numbered sections
       };
       
@@ -210,16 +249,19 @@ export function SongEditor() {
 
       if (id) {
         // Update in database
-        await updateSong({
+        const songToUpdate = {
           ...updatedSong,
           id,
           title: updatedSong.title,
           artist: updatedSong.artist,
           sections: updatedSong.sections,
           tags: updatedSong.tags,
+          notes: updatedSong.notes,
           createdAt: updatedSong.createdAt || new Date().toISOString(),
           updatedAt: new Date().toISOString()
-        });
+        };
+        
+        await updateSong(songToUpdate);
         
         // Also update in context
         updateContextSong(id, updatedSong);
@@ -228,7 +270,8 @@ export function SongEditor() {
           title: updatedSong.title,
           artist: updatedSong.artist,
           sections: updatedSong.sections,
-          tags: updatedSong.tags
+          tags: updatedSong.tags,
+          notes: updatedSong.notes
         });
         navigate(`/songs/${newId}`);
       }
@@ -249,6 +292,7 @@ export function SongEditor() {
       });
     } finally {
       setIsSaving(false);
+      setContentChanged(false); // Reset the content changed flag after saving
     }
   };
 
@@ -258,7 +302,16 @@ export function SongEditor() {
         <Group>
           <ActionIcon
             variant="subtle"
-            onClick={() => navigate('/songs')}
+            onClick={() => {
+              // Save before navigating away
+              if (contentChanged) {
+                autoSave().then(() => {
+                  navigate('/songs');
+                });
+              } else {
+                navigate('/songs');
+              }
+            }}
             title="Back to Songs"
           >
             <IconArrowLeft />
@@ -325,15 +378,14 @@ export function SongEditor() {
               size="md"
               leftSection={<IconMusic size={18} />}
             />
-            <TextInput
-              label="Artist"
-              value={artist}
-              onChange={(e) => setArtist(e.target.value)}
-              placeholder="Enter artist name"
-              size="md"
-              leftSection={<IconUser size={18} />}
-              mt="xs"
-            />
+            <div style={{ marginTop: '8px' }}>
+              <ArtistInput
+                label="Artist"
+                value={artist}
+                onChange={setArtist}
+                placeholder="Enter artist name"
+              />
+            </div>
           </Grid.Col>
           
           {/* Transpose and Tags section */}
@@ -361,96 +413,118 @@ export function SongEditor() {
         </Grid>
       </Paper>
 
-      <Paper p={0} style={{ backgroundColor: 'var(--mantine-color-dark-6)', border: 'none', boxShadow: 'none' }}>
-        <Stack gap="xs">
-          {song.sections.map((section, index) => (
-            <div
-              key={index}
-              style={{ position: 'relative' }}
-              className="section-container"
-            >
-              <div
-                onClick={() => setEditingSectionIndex(index)}
-                style={{ cursor: 'pointer' }}
-              >
-                <SongSection
-                  type={section.type}
-                  content={section.content}
-                  number={section.number}
-                  chords={section.chords}
-                />
-              </div>
-              
-              {/* Section controls */}
-              <div className="section-controls">
-                <Tooltip label="Move Up" withArrow position="left">
-                  <ActionIcon 
-                    size="md" 
-                    variant="light" 
-                    color="blue"
-                    disabled={index === 0}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (index > 0) {
-                        const updatedSections = [...song.sections];
-                        [updatedSections[index], updatedSections[index - 1]] = 
-                          [updatedSections[index - 1], updatedSections[index]];
-                        const numberedSections = updateSectionNumbers(updatedSections);
-                        setSong({...song, sections: numberedSections});
-                      }
-                    }}
+      <Tabs value={activeTab} onChange={setActiveTab}>
+        <Tabs.List>
+          <Tabs.Tab value="sections" leftSection={<IconMusic size={16} />}>Sections</Tabs.Tab>
+          <Tabs.Tab value="notes" leftSection={<IconNotes size={16} />}>Notes</Tabs.Tab>
+        </Tabs.List>
+
+        <Tabs.Panel value="sections" pt="md">
+          <Paper p={0} style={{ backgroundColor: 'var(--mantine-color-dark-6)', border: 'none', boxShadow: 'none' }}>
+            <Stack gap="xs">
+              {song.sections.map((section, index) => (
+                <div
+                  key={index}
+                  style={{ position: 'relative' }}
+                  className="section-container"
+                >
+                  <div
+                    onClick={() => setEditingSectionIndex(index)}
+                    style={{ cursor: 'pointer' }}
                   >
-                    <IconArrowUp size={18} />
-                  </ActionIcon>
-                </Tooltip>
-                
-                <Tooltip label="Move Down" withArrow position="left">
-                  <ActionIcon 
-                    size="md" 
-                    variant="light" 
-                    color="blue"
-                    disabled={index === song.sections.length - 1}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (index < song.sections.length - 1) {
-                        const updatedSections = [...song.sections];
-                        [updatedSections[index], updatedSections[index + 1]] = 
-                          [updatedSections[index + 1], updatedSections[index]];
-                        const numberedSections = updateSectionNumbers(updatedSections);
-                        setSong({...song, sections: numberedSections});
-                      }
-                    }}
-                  >
-                    <IconArrowDown size={18} />
-                  </ActionIcon>
-                </Tooltip>
-                
-                <Tooltip label="Delete Section" withArrow position="left">
-                  <ActionIcon 
-                    size="md" 
-                    variant="light" 
-                    color="red"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      const updatedSections = [...song.sections];
-                      updatedSections.splice(index, 1);
-                      const numberedSections = updateSectionNumbers(updatedSections);
-                      setSong({...song, sections: numberedSections});
-                      notifications.show({
-                        title: 'Section Deleted',
-                        message: `${section.type.charAt(0).toUpperCase() + section.type.slice(1)} ${section.number} was removed`,
-                        color: 'red'
-                      });
-                    }}
-                  >
-                    <IconTrash size={18} />
-                  </ActionIcon>
-                </Tooltip>
-              </div>
-            </div>
-          ))}
-        </Stack>
-      </Paper>
+                    <SongSection
+                      type={section.type}
+                      content={section.content}
+                      number={section.number}
+                      chords={section.chords}
+                    />
+                  </div>
+                  
+                  {/* Section controls */}
+                  <div className="section-controls">
+                    <Tooltip label="Move Up" withArrow position="left">
+                      <ActionIcon 
+                        size="md" 
+                        variant="light" 
+                        color="blue"
+                        disabled={index === 0}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (index > 0) {
+                            const updatedSections = [...song.sections];
+                            [updatedSections[index], updatedSections[index - 1]] = 
+                              [updatedSections[index - 1], updatedSections[index]];
+                            const numberedSections = updateSectionNumbers(updatedSections);
+                            setSong({...song, sections: numberedSections});
+                          }
+                        }}
+                      >
+                        <IconArrowUp size={18} />
+                      </ActionIcon>
+                    </Tooltip>
+                    
+                    <Tooltip label="Move Down" withArrow position="left">
+                      <ActionIcon 
+                        size="md" 
+                        variant="light" 
+                        color="blue"
+                        disabled={index === song.sections.length - 1}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (index < song.sections.length - 1) {
+                            const updatedSections = [...song.sections];
+                            [updatedSections[index], updatedSections[index + 1]] = 
+                              [updatedSections[index + 1], updatedSections[index]];
+                            const numberedSections = updateSectionNumbers(updatedSections);
+                            setSong({...song, sections: numberedSections});
+                          }
+                        }}
+                      >
+                        <IconArrowDown size={18} />
+                      </ActionIcon>
+                    </Tooltip>
+                    
+                    <Tooltip label="Delete Section" withArrow position="left">
+                      <ActionIcon 
+                        size="md" 
+                        variant="light" 
+                        color="red"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const updatedSections = [...song.sections];
+                          updatedSections.splice(index, 1);
+                          const numberedSections = updateSectionNumbers(updatedSections);
+                          setSong({...song, sections: numberedSections});
+                          notifications.show({
+                            title: 'Section Deleted',
+                            message: `${section.type.charAt(0).toUpperCase() + section.type.slice(1)} ${section.number} was removed`,
+                            color: 'red'
+                          });
+                        }}
+                      >
+                        <IconTrash size={18} />
+                      </ActionIcon>
+                    </Tooltip>
+                  </div>
+                </div>
+              ))}
+            </Stack>
+          </Paper>
+        </Tabs.Panel>
+
+        <Tabs.Panel value="notes" pt="md">
+          <SongNotes 
+            notes={notes} 
+            onChange={(newNotes) => {
+              setNotes(newNotes);
+              // Force an immediate save when notes change
+              if (notes !== newNotes) {
+                setTimeout(() => autoSave(), 100);
+              }
+            }} 
+          />
+        </Tabs.Panel>
+      </Tabs>
 
       {/* Section editing modal */}
       {editingSectionIndex !== null && (
