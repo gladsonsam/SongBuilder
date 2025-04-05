@@ -187,7 +187,23 @@ export function UnifiedImportModal({ opened, onClose, onImport, onBatchComplete 
           try {
             // Parse the XML file
             const parsedXMLFile = parseXMLFile(fileText);
-            const { sections, title, artist } = parsedXMLFile;
+            const { sections, title, artist, tags } = parsedXMLFile;
+            
+            console.log('XML Import - Parsed file:', { title, artist, tags, sectionCount: sections.length });
+            
+            // Extract themes directly from XML content using regex
+            const themesMatch = fileText.match(/<themes>([\s\S]*?)<\/themes>/);
+            let extractedThemes: string[] = [];
+            
+            if (themesMatch && themesMatch[1]) {
+              const themeMatches = themesMatch[1].match(/<theme>([^<]+)<\/theme>/g);
+              if (themeMatches) {
+                extractedThemes = themeMatches.map(match => {
+                  return match.replace(/<theme>|<\/theme>/g, '').trim();
+                });
+                console.log('XML Import - Directly extracted themes:', extractedThemes);
+              }
+            }
             
             if (sections.length === 0) {
               newResults.push({
@@ -198,12 +214,34 @@ export function UnifiedImportModal({ opened, onClose, onImport, onBatchComplete 
               continue;
             }
             
-            // Save as a new song
-            const newId = await saveSong({
+            // Save as a new song with tags - use the extracted themes if available
+            const finalTags = extractedThemes.length > 0 ? extractedThemes : (tags || []);
+            console.log('XML Import - Final tags to save:', finalTags);
+            
+            // Make sure tags are properly formatted as an array of strings
+            // Force conversion to an array of strings and remove any empty values
+            const processedTags = Array.isArray(finalTags) 
+              ? finalTags
+                  .map(tag => String(tag).trim())
+                  .filter(tag => tag.length > 0)
+              : [];
+            console.log('XML Import - Processed tags:', processedTags);
+            
+            const songToSave = {
               title: title || file.name.replace('.xml', ''),
               artist: artist || '',
-              sections
-            });
+              sections,
+              tags: processedTags
+            };
+            
+            console.log('XML Import - Saving song with tags:', songToSave.tags);
+            
+            // Debug: Log the exact type and structure of the tags
+            console.log('XML Import - Tags type:', typeof songToSave.tags);
+            console.log('XML Import - Tags is array:', Array.isArray(songToSave.tags));
+            console.log('XML Import - Tags stringified:', JSON.stringify(songToSave.tags));
+            
+            const newId = await saveSong(songToSave);
             
             newResults.push({
               fileName: file.name,

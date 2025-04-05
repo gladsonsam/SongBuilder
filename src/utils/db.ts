@@ -1,7 +1,7 @@
 import { logger } from './logger';
 
 const DB_NAME = 'songbuilder';
-const DB_VERSION = 2;
+const DB_VERSION = 3;
 let db: IDBDatabase | null = null;
 
 export interface Song {
@@ -12,6 +12,7 @@ export interface Song {
   createdAt: string;
   updatedAt: string;
   tags?: string[]; // Array of tags for categorizing songs
+  notes?: string; // Rich text notes for the song
 }
 
 export interface Section {
@@ -50,11 +51,34 @@ export async function initDB(): Promise<IDBDatabase> {
     request.onupgradeneeded = (event) => {
       logger.log('Database upgrade needed');
       const database = event.target ? (event.target as IDBOpenDBRequest).result : request.result;
+      const oldVersion = event.oldVersion;
       
       // Handle version upgrade
       if (!database.objectStoreNames.contains('songs')) {
         logger.log('Creating songs store');
         database.createObjectStore('songs', { keyPath: 'id' });
+      }
+      
+      // Add notes field in version 3
+      if (oldVersion < 3) {
+        logger.log('Upgrading to version 3: Adding notes field');
+        const transaction = (event.target as IDBOpenDBRequest).transaction;
+        if (transaction) {
+          const songsStore = transaction.objectStore('songs');
+          // Get all existing songs
+          songsStore.openCursor().onsuccess = function(cursorEvent) {
+            const cursor = (cursorEvent.target as IDBRequest<IDBCursorWithValue>)?.result;
+            if (cursor) {
+              // Update each song to include empty notes if not present
+              const song = cursor.value;
+              if (!song.notes) {
+                song.notes = '';
+                cursor.update(song);
+              }
+              cursor.continue();
+            }
+          };
+        }
       }
     };
 
@@ -78,12 +102,22 @@ export async function saveSong(song: Omit<Song, 'id' | 'createdAt' | 'updatedAt'
       const transaction = database.transaction(['songs'], 'readwrite');
       const store = transaction.objectStore('songs');
 
+      // Ensure tags are properly formatted as an array of strings
+      const processedTags = Array.isArray(song.tags) 
+        ? song.tags
+            .map(tag => String(tag).trim())
+            .filter(tag => tag.length > 0)
+        : [];
+      
+      console.log('saveSong - Processing tags:', { original: song.tags, processed: processedTags });
+      
       const songWithMetadata: Song = {
         ...song,
         id: Math.random().toString(36).substr(2, 9),
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
-        tags: song.tags || [] // Initialize with empty array if not provided
+        tags: processedTags, // Use the properly processed tags
+        notes: song.notes || '' // Initialize with empty string if not provided
       };
 
       const request = store.add(songWithMetadata);
@@ -176,9 +210,19 @@ export async function updateSong(song: Song): Promise<void> {
       const transaction = database.transaction(['songs'], 'readwrite');
       const store = transaction.objectStore('songs');
 
+      // Ensure tags are properly formatted as an array of strings
+      const processedTags = Array.isArray(song.tags) 
+        ? song.tags
+            .map(tag => String(tag).trim())
+            .filter(tag => tag.length > 0)
+        : [];
+      
+      console.log('updateSong - Processing tags:', { original: song.tags, processed: processedTags });
+      
       const updatedSong = {
         ...song,
-        updatedAt: new Date().toISOString()
+        updatedAt: new Date().toISOString(),
+        tags: processedTags // Use the properly processed tags
       };
 
       const request = store.put(updatedSong);

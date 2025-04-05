@@ -278,6 +278,7 @@ export interface ParsedShowFile {
   sections: Section[];
   title?: string;
   artist?: string;
+  tags?: string[];
 }
 
 export function parseShowFile(content: string): ParsedShowFile {
@@ -415,7 +416,8 @@ function parseOpenLyricsXML(content: string): ParsedShowFile {
   const result: ParsedShowFile = {
     sections: [],
     title: '',
-    artist: ''
+    artist: '',
+    tags: []
   };
   
   try {
@@ -432,16 +434,70 @@ function parseOpenLyricsXML(content: string): ParsedShowFile {
       console.log('Found title:', result.title);
     }
     
-    // Extract authors and join them with commas
+    // Extract authors and properly handle multiple authors
     const authorElements = xmlDoc.querySelectorAll('song > properties > authors > author');
     if (authorElements.length > 0) {
       const authorSet = new Set<string>();
       authorElements.forEach(author => {
         const authorText = author.textContent;
-        if (authorText) authorSet.add(authorText);
+        if (authorText) {
+          // Split authors that contain '&' or 'and' into separate authors
+          if (authorText.includes('&') || authorText.toLowerCase().includes(' and ')) {
+            const splitAuthors = authorText.split(/\s*&\s*|\s+and\s+/i);
+            splitAuthors.forEach(a => {
+              if (a.trim()) authorSet.add(a.trim());
+            });
+          } else {
+            authorSet.add(authorText.trim());
+          }
+        }
       });
       result.artist = Array.from(authorSet).join(', ');
       console.log('Found artist:', result.artist);
+    }
+    
+    // Extract themes as tags - using regex for reliability
+    console.log('OpenLyricsXML Parser - Raw XML content:', content.substring(0, 500) + '...');
+    
+    // First try DOM approach
+    const themeElements = xmlDoc.querySelectorAll('song > properties > themes > theme');
+    console.log('OpenLyricsXML Parser - Found theme elements via DOM:', themeElements.length);
+    
+    if (themeElements.length > 0) {
+      const tags: string[] = [];
+      themeElements.forEach(theme => {
+        const themeText = theme.textContent;
+        console.log('OpenLyricsXML Parser - Theme text via DOM:', themeText);
+        if (themeText) tags.push(themeText.trim());
+      });
+      result.tags = tags;
+      console.log('OpenLyricsXML Parser - Set tags via DOM:', result.tags);
+    }
+    
+    // Always try regex approach as a fallback or additional method
+    console.log('OpenLyricsXML Parser - Trying regex theme extraction');
+    if (content.includes('<themes>') && content.includes('</themes>')) {
+      const themesMatch = content.match(/<themes>([\s\S]*?)<\/themes>/);
+      if (themesMatch && themesMatch[1]) {
+        const themeMatches = themesMatch[1].match(/<theme>([^<]+)<\/theme>/g);
+        if (themeMatches) {
+          const regexTags = themeMatches.map(match => {
+            const themeText = match.replace(/<theme>|<\/theme>/g, '').trim();
+            console.log('OpenLyricsXML Parser - Found theme via regex:', themeText);
+            return themeText;
+          });
+          
+          // If we already have tags from DOM approach, merge them
+          if (result.tags && result.tags.length > 0) {
+            const combinedTags = [...new Set([...result.tags, ...regexTags])];
+            result.tags = combinedTags;
+            console.log('OpenLyricsXML Parser - Combined tags:', result.tags);
+          } else {
+            result.tags = regexTags;
+            console.log('OpenLyricsXML Parser - Set tags via regex:', result.tags);
+          }
+        }
+      }
     }
     
     // Extract verses
@@ -704,7 +760,8 @@ export function parseXMLFile(content: string): ParsedShowFile {
       console.log('parseXMLFile received result from parseOpenLyricsXML:', {
         title: result.title,
         artist: result.artist,
-        sectionCount: result.sections.length
+        sectionCount: result.sections.length,
+        tags: result.tags
       });
       return result;
     }
@@ -743,9 +800,60 @@ export function parseXMLFile(content: string): ParsedShowFile {
       const authorSet = new Set<string>();
       openLyricsAuthors.forEach(author => {
         const authorText = author.textContent;
-        if (authorText) authorSet.add(authorText);
+        if (authorText) {
+          // Split authors that contain '&' or 'and' into separate authors
+          if (authorText.includes('&') || authorText.toLowerCase().includes(' and ')) {
+            const splitAuthors = authorText.split(/\s*&\s*|\s+and\s+/i);
+            splitAuthors.forEach(a => {
+              if (a.trim()) authorSet.add(a.trim());
+            });
+          } else {
+            authorSet.add(authorText.trim());
+          }
+        }
       });
       result.artist = Array.from(authorSet).join(', ');
+    }
+    
+    // Extract themes as tags for OpenLyrics format - using both DOM and regex
+    const openLyricsThemes = xmlDoc.querySelectorAll('song > properties > themes > theme');
+    console.log('XML Parser - Found theme elements via DOM:', openLyricsThemes.length);
+    
+    if (openLyricsThemes.length > 0) {
+      const tags: string[] = [];
+      openLyricsThemes.forEach(theme => {
+        const themeText = theme.textContent;
+        console.log('XML Parser - Theme text via DOM:', themeText);
+        if (themeText) tags.push(themeText.trim());
+      });
+      result.tags = tags;
+      console.log('XML Parser - Set tags via DOM:', result.tags);
+    }
+    
+    // Always try regex approach as a fallback or additional method
+    console.log('XML Parser - Trying regex theme extraction');
+    if (content.includes('<themes>') && content.includes('</themes>')) {
+      const themesMatch = content.match(/<themes>([\s\S]*?)<\/themes>/);
+      if (themesMatch && themesMatch[1]) {
+        const themeMatches = themesMatch[1].match(/<theme>([^<]+)<\/theme>/g);
+        if (themeMatches) {
+          const regexTags = themeMatches.map(match => {
+            const themeText = match.replace(/<theme>|<\/theme>/g, '').trim();
+            console.log('XML Parser - Found theme via regex:', themeText);
+            return themeText;
+          });
+          
+          // If we already have tags from DOM approach, merge them
+          if (result.tags && result.tags.length > 0) {
+            const combinedTags = [...new Set([...result.tags, ...regexTags])];
+            result.tags = combinedTags;
+            console.log('XML Parser - Combined tags:', result.tags);
+          } else {
+            result.tags = regexTags;
+            console.log('XML Parser - Set tags via regex:', result.tags);
+          }
+        }
+      }
     }
     
     // If no OpenLyrics metadata, try other formats
