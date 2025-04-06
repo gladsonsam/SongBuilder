@@ -437,6 +437,33 @@ export function SongEditor() {
                       content={section.content}
                       number={section.number}
                       chords={section.chords}
+                      onChordMove={(chordId, lineIndex, newPosition) => {
+                        // Create a copy of the sections array
+                        const updatedSections = [...song.sections];
+                        const sectionToUpdate = {...updatedSections[index]};
+                        
+                        // Find the chord to move
+                        const chordIndex = sectionToUpdate.chords.findIndex(c => c.id === chordId);
+                        if (chordIndex === -1) return;
+                        
+                        // Update the chord position and line
+                        const updatedChords = [...sectionToUpdate.chords];
+                        updatedChords[chordIndex] = {
+                          ...updatedChords[chordIndex],
+                          position: newPosition,
+                          line: lineIndex
+                        };
+                        
+                        // Update the section with the modified chords
+                        sectionToUpdate.chords = updatedChords;
+                        updatedSections[index] = sectionToUpdate;
+                        
+                        // Update the song state
+                        setSong({...song, sections: updatedSections});
+                        
+                        // Mark content as changed to trigger autosave
+                        setContentChanged(true);
+                      }}
                     />
                   </div>
                   

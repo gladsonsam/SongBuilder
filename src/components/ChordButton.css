@@ -1,0 +1,14 @@
+.chord {
+  font-family: monospace;
+  cursor: grab;
+}
+
+.chord.dragging {
+  opacity: 0.5;
+  cursor: grabbing !important;
+}
+
+.chord:hover {
+  transform: translateY(-2px);
+  transition: transform 0.2s ease;
+}

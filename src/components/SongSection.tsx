@@ -1,7 +1,9 @@
+import React from 'react';
 import { Paper, Text, Box, Stack } from '@mantine/core';
 import { ChordButton } from './ChordButton';
 import { useSettings } from '../context/SettingsContext';
 import { Chord } from '../types/song';
+import './SongSection.css';
 
 interface SongSectionProps {
   type: 'verse' | 'chorus' | 'bridge' | 'tag' | 'break' | 'intro' | 'outro' | 'pre-chorus';
@@ -9,9 +11,10 @@ interface SongSectionProps {
   number?: number;
   chords: Chord[];
   onChordClick?: (chord: string) => void;
+  onChordMove?: (chordId: string, lineIndex: number, newPosition: number) => void;
 }
 
-export function SongSection({ type, content, number, chords, onChordClick }: SongSectionProps) {
+export function SongSection({ type, content, number, chords, onChordClick, onChordMove }: SongSectionProps) {
   const { settings } = useSettings();
   const sectionColor = settings.colors[type] || 'blue';
   
@@ -34,7 +37,76 @@ export function SongSection({ type, content, number, chords, onChordClick }: Son
     acc[chord.line].push(chord);
     return acc;
   }, {} as Record<number, Chord[]>);
+  
+  // State to track the position indicator during drag
+  const [dropIndicator, setDropIndicator] = React.useState<{ line: number; position: number } | null>(null);
 
+  // Handle drag over event - needed to allow dropping
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    
+    // Add a visual indicator for the drop target
+    e.currentTarget.classList.add('drag-over');
+    
+    // Calculate the position for the drop indicator
+    const rect = e.currentTarget.getBoundingClientRect();
+    const dropX = e.clientX - rect.left;
+    
+    // Get the line index from the data attribute
+    const lineIndex = parseInt(e.currentTarget.getAttribute('data-line-index') || '0', 10);
+    
+    // Estimate character width - assuming monospace font where 1ch ≈ 8px
+    const charWidth = 8;
+    const position = Math.round(dropX / charWidth);
+    
+    // Update the drop indicator position
+    setDropIndicator({ line: lineIndex, position });
+  };
+  
+  // Handle drag leave event
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    e.currentTarget.classList.remove('drag-over');
+    // Clear the drop indicator when leaving the drop target
+    setDropIndicator(null);
+  };
+  
+  // Handle drop event
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>, lineIndex: number) => {
+    e.preventDefault();
+    e.currentTarget.classList.remove('drag-over');
+    // Clear the drop indicator after dropping
+    setDropIndicator(null);
+    
+    try {
+      // Get the chord data from the drag event
+      const chordData = e.dataTransfer.getData('application/chord');
+      if (!chordData) return;
+      
+      const { chord } = JSON.parse(chordData);
+      
+      // Calculate the new position based on the drop location
+      // We need to convert from pixels to character units (ch)
+      const rect = e.currentTarget.getBoundingClientRect();
+      const dropX = e.clientX - rect.left;
+      
+      // Estimate character width - assuming monospace font where 1ch ≈ 8px
+      // This is an approximation and may need adjustment based on your font
+      const charWidth = 8;
+      const newPosition = Math.round(dropX / charWidth);
+      
+      // Find the chord that was dragged
+      const draggedChord = chords.find(c => c.text === chord);
+      if (draggedChord && onChordMove) {
+        onChordMove(draggedChord.id, lineIndex, newPosition);
+      }
+    } catch (error) {
+      console.error('Error handling chord drop:', error);
+    }
+  };
+
+  // We're now using an imported CSS file instead of dynamic style injection
+  
   return (
     <Paper 
       p="md" 
@@ -58,11 +130,15 @@ export function SongSection({ type, content, number, chords, onChordClick }: Son
           {lines.map((line, lineIndex) => (
             <Box 
               key={lineIndex} 
+              data-line-index={lineIndex}
               style={{ 
                 position: 'relative',
                 height: line.trim() ? '3em' : '1em', // Taller for lines with content, shorter for empty lines
                 marginBottom: lineIndex < lines.length - 1 ? '0.5em' : 0 // Margin except for last line
               }}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={(e) => handleDrop(e, lineIndex)}
             >
               {/* Chord line */}
               <Box 
@@ -77,6 +153,13 @@ export function SongSection({ type, content, number, chords, onChordClick }: Son
                   letterSpacing: '0px' // Ensure exact spacing
                 }}
               >
+                {/* Drop indicator */}
+                {dropIndicator && dropIndicator.line === lineIndex && (
+                  <div 
+                    className="chord-drop-indicator"
+                    style={{ left: `${dropIndicator.position}ch` }}
+                  />
+                )}
                 {chordsByLine[lineIndex]?.map((chord) => (
                   <ChordButton
                     key={chord.id}
