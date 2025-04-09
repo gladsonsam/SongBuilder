@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Stack, Title, TextInput, Button, Group, ActionIcon, Text, Paper, Modal, Grid, Menu, Tooltip, Tabs } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
-import { IconArrowLeft, IconUpload, IconDownload, IconMusic, IconPlus, IconArrowUp, IconArrowDown, IconTrash, IconNotes } from '@tabler/icons-react';
+import { IconArrowLeft, IconUpload, IconDownload, IconMusic, IconPlus, IconArrowUp, IconArrowDown, IconTrash, IconNotes, IconEdit } from '@tabler/icons-react';
 import '../components/SectionControls.css';
 import { ArtistInput } from '../components/ArtistInput';
 import { UnifiedImportModal } from '../components/UnifiedImportModal';
@@ -17,6 +17,7 @@ import { TagInput } from '../components/TagInput';
 import { useSongs } from '../context/SongContext';
 import { detectKey } from '../utils/transpose';
 import { SongNotes } from '../components/SongNotes';
+import { TextEditorModal } from '../components/TextEditorModal';
 
 export function SongEditor() {
   const navigate = useNavigate();
@@ -36,6 +37,7 @@ export function SongEditor() {
   const [isSaving, setIsSaving] = useState(false);
   const [contentChanged, setContentChanged] = useState(false);
   const [activeTab, setActiveTab] = useState<string | null>('sections');
+  const [textEditorOpen, setTextEditorOpen] = useState(false);
 
   const [editingSectionIndex, setEditingSectionIndex] = useState<number | null>(null);
 
@@ -414,10 +416,19 @@ export function SongEditor() {
       </Paper>
 
       <Tabs value={activeTab} onChange={setActiveTab}>
-        <Tabs.List>
-          <Tabs.Tab value="sections" leftSection={<IconMusic size={16} />}>Sections</Tabs.Tab>
-          <Tabs.Tab value="notes" leftSection={<IconNotes size={16} />}>Notes</Tabs.Tab>
-        </Tabs.List>
+        <Group justify="space-between" align="center">
+          <Tabs.List>
+            <Tabs.Tab value="sections" leftSection={<IconMusic size={16} />}>Sections</Tabs.Tab>
+            <Tabs.Tab value="notes" leftSection={<IconNotes size={16} />}>Notes</Tabs.Tab>
+          </Tabs.List>
+          <Button
+            variant="light"
+            leftSection={<IconEdit size={16} />}
+            onClick={() => setTextEditorOpen(true)}
+          >
+            Text Edit
+          </Button>
+        </Group>
 
         <Tabs.Panel value="sections" pt="md">
           <Paper p={0} style={{ backgroundColor: 'var(--mantine-color-dark-6)', border: 'none', boxShadow: 'none' }}>
@@ -606,6 +617,16 @@ export function SongEditor() {
         opened={exportModalOpen}
         onClose={() => setExportModalOpen(false)}
         sections={song.sections}
+      />
+
+      <TextEditorModal
+        opened={textEditorOpen}
+        onClose={() => setTextEditorOpen(false)}
+        sections={song.sections}
+        onSave={(newSections) => {
+          setSong({ ...song, sections: updateSectionNumbers(newSections) });
+          setTextEditorOpen(false);
+        }}
       />
     </Stack>
   );

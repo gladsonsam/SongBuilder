@@ -131,11 +131,11 @@ export function TagInput({ value = [], onChange, placeholder = 'Add tag...', lab
         <div style={{ 
           position: 'absolute', 
           zIndex: 1000, 
-          backgroundColor: 'white', 
-          border: '1px solid #e0e0e0',
+          backgroundColor: 'var(--mantine-color-body)', 
+          border: '1px solid var(--mantine-color-default-border)',
           borderRadius: '4px',
           marginTop: '4px',
-          boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)',
+          boxShadow: '0 2px 10px var(--mantine-color-shadow)',
           maxWidth: '100%',
           width: inputRef.current?.offsetWidth || 'auto'
         }}>
@@ -145,10 +145,10 @@ export function TagInput({ value = [], onChange, placeholder = 'Add tag...', lab
               style={{ 
                 padding: '8px 12px', 
                 cursor: 'pointer',
-                borderBottom: index < filteredSuggestions.length - 1 ? '1px solid #f0f0f0' : 'none'
+                borderBottom: index < filteredSuggestions.length - 1 ? '1px solid var(--mantine-color-default-border)' : 'none'
               }}
-              onMouseOver={(e) => (e.currentTarget.style.backgroundColor = '#f5f5f5')}
-              onMouseOut={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+              onMouseOver={(e) => (e.currentTarget.style.backgroundColor = 'var(--mantine-color-default-hover)')}
+              onMouseOut={(e) => (e.currentTarget.style.backgroundColor = 'var(--mantine-color-body)')}
               onMouseDown={() => addTag(suggestion)}
             >
               {suggestion}
