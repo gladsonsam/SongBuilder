@@ -246,10 +246,10 @@ export function ImportSongModal({ opened, onClose, onImport }: ImportSongModalPr
               autosize
             />
             <Group justify="flex-end">
-              <Button variant="light" onClick={onClose}>
+              <Button variant="light" onClick={onClose} title="Cancel import operation">
                 Cancel
               </Button>
-              <Button onClick={handleTextImport} loading={isLoading}>
+              <Button onClick={handleTextImport} loading={isLoading} title="Import song from text">
                 Import
               </Button>
             </Group>
@@ -263,11 +263,11 @@ export function ImportSongModal({ opened, onClose, onImport }: ImportSongModalPr
             </Text>
             <Box py="md" style={{ display: 'flex', justifyContent: 'center' }}>
               <FileButton onChange={handleFileImport} accept=".show,.xml,.txt,.cho,.pro">
-                {(props) => <Button {...props} loading={isLoading}>Select File</Button>}
+                {(props) => <Button {...props} loading={isLoading} title="Choose a song file to import">Select File</Button>}
               </FileButton>
             </Box>
             <Group justify="flex-end">
-              <Button variant="light" onClick={onClose}>
+              <Button variant="light" onClick={onClose} title="Cancel import operation">
                 Cancel
               </Button>
             </Group>

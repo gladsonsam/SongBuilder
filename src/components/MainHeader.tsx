@@ -1,13 +1,25 @@
 
-import { Group, Title, Button, useMantineColorScheme } from '@mantine/core';
+import { Group, Title, Button, useMantineColorScheme, Burger, rem } from '@mantine/core';
 import { IconSun, IconMoon } from '@tabler/icons-react';
+interface MainHeaderProps {
+  opened: boolean;
+  onToggle: () => void;
+}
 
-export function MainHeader() {
+export function MainHeader({ opened, onToggle }: MainHeaderProps) {
   const { colorScheme, toggleColorScheme } = useMantineColorScheme();
 
   return (
-    <Group h="100%" px="md" justify="space-between">
-      <Title order={1}>SongBuilder</Title>
+    <Group h="100%" px="md" justify="space-between" wrap="nowrap">
+      <Group gap="sm" wrap="nowrap">
+        <Burger
+          opened={opened}
+          onClick={onToggle}
+          hiddenFrom="sm"
+          size="sm"
+        />
+        <Title order={1} size={rem(24)}>SongBuilder</Title>
+      </Group>
       <Button
         variant="default"
         onClick={toggleColorScheme}
@@ -18,4 +30,4 @@ export function MainHeader() {
       </Button>
     </Group>
   );
-} 
+}

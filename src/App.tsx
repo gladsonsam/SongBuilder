@@ -1,3 +1,4 @@
+import React from 'react';
 // React is used implicitly by JSX
 import { MantineProvider, AppShell } from '@mantine/core';
 import { Notifications } from '@mantine/notifications';
@@ -14,11 +15,20 @@ import '@mantine/core/styles.css';
 import '@mantine/notifications/styles.css';
 
 export default function App() {
+  const [opened, setOpened] = React.useState(false);
+
   return (
     <MantineProvider
       defaultColorScheme="dark"
       theme={{
         primaryColor: 'blue',
+        breakpoints: {
+          xs: '30em',    // 480px
+          sm: '48em',    // 768px
+          md: '64em',    // 1024px
+          lg: '74em',    // 1184px
+          xl: '90em',    // 1440px
+        },
       }}
     >
       <SettingsProvider>
@@ -26,16 +36,21 @@ export default function App() {
           <Notifications />
           <Router>
             <AppShell
-              header={{ height: 60 }}
-              navbar={{ width: 240, breakpoint: 'sm' }}
-              padding="md"
+              header={{ height: { base: 60, sm: 60 } }}
+              navbar={{
+                width: { base: 240, sm: 240 },
+                breakpoint: 'sm',
+                collapsed: { mobile: !opened }
+              }}
+              padding={{ base: 'sm', sm: 'md' }}
+              layout="alt"
             >
               <AppShell.Header>
-                <MainHeader />
+                <MainHeader opened={opened} onToggle={() => setOpened(!opened)} />
               </AppShell.Header>
 
               <AppShell.Navbar>
-                <MainNavbar />
+                <MainNavbar onNavClick={() => setOpened(false)} />
               </AppShell.Navbar>
 
               <AppShell.Main>

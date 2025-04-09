@@ -459,10 +459,10 @@ export function UnifiedImportModal({ opened, onClose, onImport, onBatchComplete 
                 autosize
               />
               <Group justify="flex-end">
-                <Button variant="light" onClick={onClose}>
+                <Button variant="light" onClick={onClose} title="Cancel import operation">
                   Cancel
                 </Button>
-                <Button onClick={handleTextImport} loading={isLoading}>
+                <Button onClick={handleTextImport} loading={isLoading} title="Import songs from text">
                   Import
                 </Button>
               </Group>
@@ -477,11 +477,11 @@ export function UnifiedImportModal({ opened, onClose, onImport, onBatchComplete 
               </Text>
               <Box py="md" style={{ display: 'flex', justifyContent: 'center' }}>
                 <FileButton onChange={handleFileImport} accept=".show,.xml,.txt,.cho,.pro" multiple>
-                  {(props) => <Button {...props} loading={isLoading}>Select File(s)</Button>}
+                  {(props) => <Button {...props} loading={isLoading} title="Choose song files to import">Select File(s)</Button>}
                 </FileButton>
               </Box>
               <Group justify="flex-end">
-                <Button variant="light" onClick={onClose}>
+                <Button variant="light" onClick={onClose} title="Cancel import operation">
                   Cancel
                 </Button>
               </Group>

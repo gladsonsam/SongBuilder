@@ -158,11 +158,11 @@ export function ExportModal({ opened, onClose, sections }: ExportModalProps) {
 
         <Group justify="flex-end">
           {exportType === 'file' && (
-            <Button onClick={handleExport} color="blue">
+            <Button onClick={handleExport} color="blue" title="Save exported song to file">
               Save File
             </Button>
           )}
-          <Button onClick={onClose}>
+          <Button onClick={onClose} title="Close export dialog">
             Close
           </Button>
         </Group>
