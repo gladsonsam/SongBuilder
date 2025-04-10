@@ -92,34 +92,87 @@ export function transposeChord(chord: string, semitones: number): string {
   return newRootNote + suffix;
 }
 
+// Define diatonic chords for each major key
+const DIATONIC_CHORDS: Record<string, string[]> = {
+  'C':  ['C', 'Dm', 'Em', 'F', 'G', 'Am', 'Bdim'],
+  'C#': ['C#', 'D#m', 'Fm', 'F#', 'G#', 'A#m', 'Cdim'],
+  'D':  ['D', 'Em', 'F#m', 'G', 'A', 'Bm', 'C#dim'],
+  'D#': ['D#', 'Fm', 'Gm', 'G#', 'A#', 'Cm', 'Ddim'],
+  'E':  ['E', 'F#m', 'G#m', 'A', 'B', 'C#m', 'D#dim'],
+  'F':  ['F', 'Gm', 'Am', 'A#', 'C', 'Dm', 'Edim'],
+  'F#': ['F#', 'G#m', 'A#m', 'B', 'C#', 'D#m', 'Fdim'],
+  'G':  ['G', 'Am', 'Bm', 'C', 'D', 'Em', 'F#dim'],
+  'G#': ['G#', 'A#m', 'Cm', 'C#', 'D#', 'Fm', 'Gdim'],
+  'A':  ['A', 'Bm', 'C#m', 'D', 'E', 'F#m', 'G#dim'],
+  'A#': ['A#', 'Cm', 'Dm', 'D#', 'F', 'Gm', 'Adim'],
+  'B':  ['B', 'C#m', 'D#m', 'E', 'F#', 'G#m', 'A#dim']
+};
+
 /**
- * Detect the key of a song based on the chords
+ * Detect the key of a song based on the chords using a scoring system
  */
 export function detectKey(chords: string[]): string {
-  // This is a simplified key detection algorithm
-  // A more sophisticated algorithm would analyze chord progressions
-  
-  // Count occurrences of each root note
-  const rootCounts: Record<string, number> = {};
-  
-  chords.forEach(chord => {
+  if (!chords.length) return 'C'; // Default to C if no chords
+
+  // Normalize all chords to use sharps
+  const normalizedChords = chords.map(chord => {
     const normalizedChord = normalizeChord(chord);
-    const rootNote = extractRoot(normalizedChord);
-    rootCounts[rootNote] = (rootCounts[rootNote] || 0) + 1;
+    const root = extractRoot(normalizedChord);
+    const suffix = extractSuffix(normalizedChord);
+    return root + suffix;
   });
-  
-  // Find the most common root note
-  let mostCommonRoot = '';
-  let maxCount = 0;
-  
-  for (const [root, count] of Object.entries(rootCounts)) {
-    if (count > maxCount) {
-      maxCount = count;
-      mostCommonRoot = root;
+
+  // Initialize scores for each key
+  const keyScores: Record<string, number> = {};
+  NOTES.forEach(key => keyScores[key] = 0);
+
+  // Score each key based on diatonic chord matches
+  for (const [key, diatonicChords] of Object.entries(DIATONIC_CHORDS)) {
+    normalizedChords.forEach(chord => {
+      // If the chord is in the key's diatonic chords, increase the score
+      if (diatonicChords.some(diatonicChord => {
+        // Match basic chord types (major, minor, diminished)
+        const normalizedDiatonic = normalizeChord(diatonicChord);
+        return chord === normalizedDiatonic || // Exact match
+               chord.replace('m', '') === normalizedDiatonic || // Major version
+               chord + 'm' === normalizedDiatonic; // Minor version
+      })) {
+        keyScores[key]++;
+      }
+    });
+  }
+
+  // Find the key with the highest score
+  let bestKey = 'C';
+  let highestScore = 0;
+
+  for (const [key, score] of Object.entries(keyScores)) {
+    if (score > highestScore) {
+      highestScore = score;
+      bestKey = key;
     }
   }
-  
-  return mostCommonRoot || 'C'; // Default to C if no chords
+
+  // If no clear winner (all scores are 0), fall back to most common root note
+  if (highestScore === 0) {
+    const rootCounts: Record<string, number> = {};
+    normalizedChords.forEach(chord => {
+      const root = extractRoot(chord);
+      rootCounts[root] = (rootCounts[root] || 0) + 1;
+    });
+
+    let mostCommonRoot = '';
+    let maxCount = 0;
+    for (const [root, count] of Object.entries(rootCounts)) {
+      if (count > maxCount) {
+        maxCount = count;
+        mostCommonRoot = root;
+      }
+    }
+    return mostCommonRoot || 'C';
+  }
+
+  return bestKey;
 }
 
 /**

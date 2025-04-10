@@ -1,4 +1,5 @@
 import { Section, Chord, Song } from '../types/song';
+import { convertToUltimateGuitarText } from './formatters';
 
 /**
  * Export sections to FreeShow text format with inline chord markers
@@ -45,6 +46,13 @@ export function exportToFreeshowText(sections: Section[]): string {
     // Combine section header with processed lines
     return sectionHeader + '\n' + processedLines.join('\n');
   }).join('\n\n');
+}
+
+/**
+ * Export sections to Ultimate Guitar text format with chords above lyrics
+ */
+export function exportToUltimateGuitarText(sections: Section[], songTitle: string = '', songArtist: string = ''): string {
+  return convertToUltimateGuitarText(songTitle, songArtist, sections);
 }
 
 /**
@@ -166,7 +174,10 @@ export function exportToShowFile(song: Song, sections: Section[]): string {
       },
       quickAccess: {},
       meta: {
-        artist: song.artist || ''
+        title: song.title || 'Untitled Song',
+        artist: song.artist || '',
+        key: song.originalKey || '',
+        duration: ''
       },
       slides,
       layouts,
