@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
-import { Textarea, Button, Group, ActionIcon, Stack, Text, Tooltip } from '@mantine/core';
-import { IconArrowBackUp, IconArrowForwardUp, IconDeviceFloppy } from '@tabler/icons-react';
+import { Textarea, Button, Group, ActionIcon, Stack, Text, Tooltip, Tabs } from '@mantine/core';
+import { IconArrowBackUp, IconArrowForwardUp, IconDeviceFloppy, IconGuitarPick } from '@tabler/icons-react';
 import { notifications } from '@mantine/notifications';
 import { Section, Chord } from '../types/song';
+import { parseUltimateGuitarText } from '../utils/parsers';
 
 interface InlineEditorProps {
   section: Section;
@@ -275,40 +276,119 @@ export function InlineEditor({ section, onSave, onCancel }: InlineEditorProps) {
     }
   }, []);
 
+  const [ugText, setUgText] = useState('');
+
+  const handleUltimateGuitarImport = () => {
+    try {
+      const sections = parseUltimateGuitarText(ugText);
+      if (sections.length > 0) {
+        const freeshowText = generateFreeshowText(sections[0]);
+        setText(freeshowText);
+        addToHistory(freeshowText);
+        notifications.show({
+          title: 'Success',
+          message: 'Ultimate Guitar format imported successfully',
+          color: 'green'
+        });
+      }
+    } catch (error) {
+      console.error('Failed to import Ultimate Guitar format:', error);
+      notifications.show({
+        title: 'Error',
+        message: 'Failed to import Ultimate Guitar format. Please check your input.',
+        color: 'red'
+      });
+    }
+  };
+
   return (
-    <Stack gap="md">
-      <Text fw={700} size="md">
+    <Stack gap="lg" p="md" style={{ border: '1px solid var(--mantine-color-gray-3)', borderRadius: 'var(--mantine-radius-md)' }}>
+      <Text fw={700} size="lg" mb="xs">
         Edit {sectionTitle}
       </Text>
-      <Text size="sm" c="dimmed">
-        Edit in Freeshow format: Add chords in square brackets [G] directly in the lyrics. Use section headers like [Verse], [Chorus], [Bridge], [Tag], [Break], [Intro], [Outro], or [Pre-Chorus].
-      </Text>
       
-      <Textarea
-        ref={textareaRef}
-        value={text}
-        onChange={handleTextChange}
-        minRows={10}
-        autosize
-        styles={{
-          input: {
-            fontFamily: 'monospace',
-            whiteSpace: 'pre',
-            overflowX: 'auto'
-          }
-        }}
-        placeholder="[Verse]\nA[G]mazing [C]grace how [D]sweet the sound"
-      />
+      <Tabs defaultValue="freeshow" styles={{ tab: { padding: '12px 16px' } }}>
+        <Tabs.List mb="md">
+          <Tabs.Tab value="freeshow" fw={500}>FreeShow Format</Tabs.Tab>
+          <Tabs.Tab value="ultimate-guitar" leftSection={<IconGuitarPick size={16} />} fw={500}>
+            Import from Ultimate Guitar
+          </Tabs.Tab>
+        </Tabs.List>
+
+        <Tabs.Panel value="freeshow" p="xs">
+          <Text size="sm" c="dimmed" mb="md">
+            Edit in Freeshow format: Add chords in square brackets [G] directly in the lyrics. Use section headers like [Verse], [Chorus], [Bridge], [Tag], [Break], [Intro], [Outro], or [Pre-Chorus].
+          </Text>
       
-      <Group justify="space-between">
-        <Group>
+          <Textarea
+            ref={textareaRef}
+            value={text}
+            onChange={handleTextChange}
+            minRows={12}
+            autosize
+            styles={{
+              input: {
+                fontFamily: 'monospace',
+                whiteSpace: 'pre',
+                overflowX: 'auto',
+                padding: '16px',
+                lineHeight: 1.5,
+                fontSize: '14px'
+              },
+              root: {
+                marginBottom: '16px'
+              }
+            }}
+            placeholder="[Verse]\nA[G]mazing [C]grace how [D]sweet the sound"
+          />
+        </Tabs.Panel>
+
+        <Tabs.Panel value="ultimate-guitar" p="xs">
+          <Text size="sm" c="dimmed" mb="md">
+            Paste Ultimate Guitar format with chords above lyrics.
+          </Text>
+          <Textarea
+            value={ugText}
+            onChange={(e) => setUgText(e.currentTarget.value)}
+            minRows={12}
+            autosize
+            styles={{
+              input: {
+                fontFamily: 'monospace',
+                whiteSpace: 'pre',
+                overflowX: 'auto',
+                padding: '16px',
+                lineHeight: 1.5,
+                fontSize: '14px'
+              },
+              root: {
+                marginBottom: '16px'
+              }
+            }}
+            placeholder="Paste Ultimate Guitar Chords Here:"
+          />
+          <Button
+            mt="md"
+            mb="md"
+            onClick={handleUltimateGuitarImport}
+            leftSection={<IconGuitarPick size={16} />}
+            size="md"
+          >
+            Import to FreeShow Format
+          </Button>
+        </Tabs.Panel>
+      </Tabs>
+      
+      <Group justify="space-between" mt="md">
+        <Group gap="md">
           <Tooltip label="Undo">
             <ActionIcon 
               variant="light" 
               onClick={handleUndo} 
               disabled={historyIndex === 0}
+              size="lg"
             >
-              <IconArrowBackUp size={16} />
+              <IconArrowBackUp size={18} />
             </ActionIcon>
           </Tooltip>
           
@@ -317,15 +397,16 @@ export function InlineEditor({ section, onSave, onCancel }: InlineEditorProps) {
               variant="light" 
               onClick={handleRedo} 
               disabled={historyIndex === history.length - 1}
+              size="lg"
             >
-              <IconArrowForwardUp size={16} />
+              <IconArrowForwardUp size={18} />
             </ActionIcon>
           </Tooltip>
         </Group>
         
-        <Group>
+        <Group gap="md">
           {onCancel && (
-            <Button variant="light" color="gray" onClick={onCancel}>
+            <Button variant="light" color="gray" onClick={onCancel} size="md">
               Cancel
             </Button>
           )}
@@ -333,6 +414,7 @@ export function InlineEditor({ section, onSave, onCancel }: InlineEditorProps) {
           <Button 
             leftSection={<IconDeviceFloppy size={16} />}
             onClick={handleSave}
+            size="md"
           >
             Save Changes
           </Button>

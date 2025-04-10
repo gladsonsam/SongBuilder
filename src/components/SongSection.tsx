@@ -41,6 +41,17 @@ export function SongSection({ type, content, number, chords, onChordClick, onCho
   // State to track the position indicator during drag
   const [dropIndicator, setDropIndicator] = React.useState<{ line: number; position: number } | null>(null);
 
+  // Reference to measure character width
+  const charMeasureRef = React.useRef<HTMLSpanElement>(null);
+  
+  // Function to get accurate character width based on the actual rendered font
+  const getCharacterWidth = (): number => {
+    if (charMeasureRef.current) {
+      return charMeasureRef.current.getBoundingClientRect().width;
+    }
+    return 8; // Fallback to 8px if measurement fails
+  };
+  
   // Handle drag over event - needed to allow dropping
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
@@ -56,8 +67,8 @@ export function SongSection({ type, content, number, chords, onChordClick, onCho
     // Get the line index from the data attribute
     const lineIndex = parseInt(e.currentTarget.getAttribute('data-line-index') || '0', 10);
     
-    // Estimate character width - assuming monospace font where 1ch ≈ 8px
-    const charWidth = 8;
+    // Get accurate character width
+    const charWidth = getCharacterWidth();
     const position = Math.round(dropX / charWidth);
     
     // Update the drop indicator position
@@ -90,9 +101,8 @@ export function SongSection({ type, content, number, chords, onChordClick, onCho
       const rect = e.currentTarget.getBoundingClientRect();
       const dropX = e.clientX - rect.left;
       
-      // Estimate character width - assuming monospace font where 1ch ≈ 8px
-      // This is an approximation and may need adjustment based on your font
-      const charWidth = 8;
+      // Get accurate character width
+      const charWidth = getCharacterWidth();
       const newPosition = Math.round(dropX / charWidth);
       
       // Find the chord that was dragged
@@ -116,6 +126,21 @@ export function SongSection({ type, content, number, chords, onChordClick, onCho
         border: isHexColor ? `1px solid ${sectionColor}` : `1px solid var(--mantine-color-${sectionColor}-3)`
       }}
     >
+      {/* Hidden span to measure character width */}
+      <span 
+        ref={charMeasureRef} 
+        style={{ 
+          visibility: 'hidden', 
+          position: 'absolute',
+          fontFamily: 'monospace',
+          fontSize: '1em',
+          letterSpacing: '0px',
+          whiteSpace: 'pre'
+        }}
+      >
+        X
+      </span>
+      
       <Stack gap="xs">
         <Text 
           fw={700} 

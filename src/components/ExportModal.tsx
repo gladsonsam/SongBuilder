@@ -1,8 +1,8 @@
 import * as React from 'react';
-import { Modal, Stack, Text, Textarea, Button, Group, SegmentedControl, Select } from '@mantine/core';
+import { Modal, Stack, Text, Textarea, Button, Group, SegmentedControl, Select, Tabs } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { Section } from '../types/song';
-import { exportToFreeshowText, exportToShowFile } from '../utils/exporters';
+import { exportToFreeshowText, exportToUltimateGuitarText, exportToShowFile } from '../utils/exporters';
 
 interface ExportModalProps {
   opened: boolean;
@@ -12,108 +12,165 @@ interface ExportModalProps {
 
 export function ExportModal({ opened, onClose, sections }: ExportModalProps) {
   const [exportType, setExportType] = React.useState<'text' | 'file'>('text');
-  const [format, setFormat] = React.useState('freeshow-text');
+  const [textFormat, setTextFormat] = React.useState<'freeshow' | 'ultimate-guitar'>('freeshow');
+  const [fileFormat, setFileFormat] = React.useState<'freeshow-show'>('freeshow-show');
   const [exportedText, setExportedText] = React.useState('');
 
   React.useEffect(() => {
     if (opened) {
-      handleExport();
+      // Only auto-export for text formats, not for file formats
+      // This prevents automatic downloads when switching to file mode
+      if (exportType === 'text') {
+        handleExport();
+      } else {
+        // For file formats, just prepare the text preview without downloading
+        prepareFileExport();
+      }
     }
-  }, [opened, format]); // Removed sections dependency to avoid re-exporting on every section change
+  }, [opened, textFormat, fileFormat, exportType]); // Re-export when format or export type changes
 
-  const handleExport = () => {
-    try {
-      let text = '';
-      let fileData: Blob | null = null;
-      let fileName = '';
+  // Get updated sections with transposed chords from the DOM
+  const getUpdatedSections = () => {
+    return [...sections].map(section => {
+      // Create a deep copy to avoid modifying the original
+      const sectionCopy = { ...section, chords: [...section.chords] };
       
-      // Get the current transposed chords from the DOM
-      const updatedSections = [...sections].map(section => {
-        // Create a deep copy to avoid modifying the original
-        const sectionCopy = { ...section, chords: [...section.chords] };
-        
-        // Update chord text with current transposed values from DOM
-        sectionCopy.chords = sectionCopy.chords.map(chord => {
-          // Find the corresponding DOM element
-          const chordElement = document.querySelector(`[data-original="${chord.text}"]`);
-          if (chordElement && chordElement.textContent) {
-            // Use the current displayed chord text (which may be transposed)
-            return { ...chord, text: chordElement.textContent };
-          }
-          return chord;
-        });
-        
-        return sectionCopy;
+      // Update chord text with current transposed values from DOM
+      sectionCopy.chords = sectionCopy.chords.map(chord => {
+        // Find the corresponding DOM element
+        const chordElement = document.querySelector(`[data-original="${chord.text}"]`);
+        if (chordElement && chordElement.textContent) {
+          // Use the current displayed chord text (which may be transposed)
+          return { ...chord, text: chordElement.textContent };
+        }
+        return chord;
       });
       
-      // Get song metadata from the first section's content (title might be in there)
-      const songTitle = document.querySelector('input[value]')?.getAttribute('value') || 'Untitled Song';
-      const songArtist = document.querySelectorAll('input[value]')[1]?.getAttribute('value') || '';
+      return sectionCopy;
+    });
+  };
+
+  // Get song metadata from the DOM
+  const getSongMetadata = () => {
+    const songTitle = document.querySelector('input[value]')?.getAttribute('value') || 'Untitled Song';
+    const songArtist = document.querySelectorAll('input[value]')[1]?.getAttribute('value') || '';
+    
+    return {
+      title: songTitle,
+      artist: songArtist,
+      fileName: `${songTitle.replace(/[^a-z0-9]/gi, '_').toLowerCase()}`
+    };
+  };
+
+  // Prepare file export without downloading
+  const prepareFileExport = () => {
+    try {
+      // Just update the preview text without triggering download
+      if (fileFormat === 'freeshow-show') {
+        setExportedText('FreeShow .show file format - click Save File to download');
+      }
+      // Future file formats can be added here
+    } catch (error) {
+      console.error('Failed to prepare file export:', error);
+      setExportedText('Error preparing file export');
+    }
+  };
+
+  // Handle text export
+  const handleTextExport = () => {
+    try {
+      const updatedSections = getUpdatedSections();
+      const { title, artist } = getSongMetadata();
+      
+      let text = '';
+      
+      if (textFormat === 'freeshow') {
+        text = exportToFreeshowText(updatedSections);
+      } else if (textFormat === 'ultimate-guitar') {
+        text = exportToUltimateGuitarText(updatedSections, title, artist);
+      }
+      
+      setExportedText(text);
+      
+      // Copy to clipboard automatically for text formats
+      navigator.clipboard.writeText(text).then(() => {
+        // Only show notification when first opened, not on every change
+        if (opened) {
+          notifications.show({
+            title: 'Success',
+            message: 'Copied to clipboard',
+            color: 'green',
+            autoClose: 2000 // Close after 2 seconds
+          });
+        }
+      });
+    } catch (error) {
+      console.error('Failed to export text:', error);
+      notifications.show({
+        title: 'Error',
+        message: 'Failed to export text',
+        color: 'red'
+      });
+    }
+  };
+
+  // Handle file export with download
+  const handleFileExport = () => {
+    try {
+      const updatedSections = getUpdatedSections();
+      const { title, artist, fileName } = getSongMetadata();
       
       const songData = {
-        title: songTitle,
-        artist: songArtist,
+        title,
+        artist,
         sections: updatedSections
       };
       
-      if (format === 'freeshow-text') {
-        text = exportToFreeshowText(updatedSections);
-        fileName = `${songTitle.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.txt`;
-      } else if (format === 'freeshow-show') {
+      let text = '';
+      let fileData: Blob | null = null;
+      let fileExtension = '';
+      
+      if (fileFormat === 'freeshow-show') {
         text = exportToShowFile(songData, updatedSections);
-        fileName = `${songTitle.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.show`;
+        fileExtension = '.show';
+        fileData = new Blob([text], { type: 'application/json' });
       }
-      // TODO: Add support for other formats
-
-      setExportedText(format.endsWith('text') ? text : 'Binary file format - use Save as File option');
-
-      if (exportType === 'text' && format.endsWith('text')) {
-        // Only show notification once when first opened
-        navigator.clipboard.writeText(text).then(() => {
-          // Only show notification when first opened, not on every change
-          if (opened) {
-            notifications.show({
-              title: 'Success',
-              message: 'Copied to clipboard',
-              color: 'green',
-              autoClose: 2000 // Close after 2 seconds
-            });
-          }
-        });
-      } else if (exportType === 'file') {
-        // Create file blob based on format
-        if (format === 'freeshow-text') {
-          fileData = new Blob([text], { type: 'text/plain' });
-        } else if (format === 'freeshow-show') {
-          fileData = new Blob([text], { type: 'application/json' });
-        }
+      // Future file formats can be added here
+      
+      if (fileData) {
+        // Create download link and trigger it
+        const url = URL.createObjectURL(fileData);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `${fileName}${fileExtension}`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
         
-        if (fileData) {
-          // Create download link and trigger it
-          const url = URL.createObjectURL(fileData);
-          const link = document.createElement('a');
-          link.href = url;
-          link.download = fileName;
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-          URL.revokeObjectURL(url);
-          
-          notifications.show({
-            title: 'Success',
-            message: `Saved as ${fileName}`,
-            color: 'green',
-            autoClose: 2000
-          });
-        }
+        notifications.show({
+          title: 'Success',
+          message: `Saved as ${fileName}${fileExtension}`,
+          color: 'green',
+          autoClose: 2000
+        });
       }
     } catch (error) {
-      console.error('Failed to export song:', error);
+      console.error('Failed to export file:', error);
       notifications.show({
         title: 'Error',
-        message: 'Failed to export song',
+        message: 'Failed to export file',
         color: 'red'
       });
+    }
+  };
+
+  // Main export handler that routes to the appropriate export function
+  const handleExport = () => {
+    if (exportType === 'text') {
+      handleTextExport();
+    } else {
+      handleFileExport();
     }
   };
 
@@ -135,30 +192,47 @@ export function ExportModal({ opened, onClose, sections }: ExportModalProps) {
           onChange={(value) => setExportType(value as 'text' | 'file')}
         />
 
-        <Select
-          label="Format"
-          value={format}
-          onChange={(value) => setFormat(value || 'freeshow')}
-          data={[
-            { value: 'freeshow-text', label: 'FreeShow Text Format' },
-            { value: 'freeshow-show', label: 'FreeShow .show File' }
-          ]}
-        />
+        {exportType === 'text' ? (
+          <Tabs value={textFormat} onChange={(value) => setTextFormat(value as 'freeshow' | 'ultimate-guitar')}>
+            <Tabs.List>
+              <Tabs.Tab value="freeshow">FreeShow Format</Tabs.Tab>
+              <Tabs.Tab value="ultimate-guitar">Ultimate Guitar Format</Tabs.Tab>
+            </Tabs.List>
+          </Tabs>
+        ) : (
+          <>
+            <Text size="sm" c="dimmed">
+              Select a file format and click Save File to download.
+            </Text>
+            <Select
+              value={fileFormat}
+              onChange={(value) => setFileFormat(value as 'freeshow-show')}
+              data={[
+                { value: 'freeshow-show', label: 'FreeShow .show File' }
+                // More file formats can be added here in the future
+              ]}
+            />
+          </>
+        )}
 
-        <Text size="sm" c="dimmed">
-          {exportType === 'text' ? 'The text will be copied to your clipboard.' : 'The song will be saved as a file.'}
-        </Text>
+        {exportType === 'text' && (
+          <Text size="sm" c="dimmed">
+            The {textFormat === 'freeshow' ? 'FreeShow' : 'Ultimate Guitar'} formatted text will be automatically copied to your clipboard.
+          </Text>
+        )}
 
-        <Textarea
-          value={exportedText}
-          readOnly
-          minRows={10}
-          autosize
-        />
+        {exportType === 'text' && (
+          <Textarea
+            value={exportedText}
+            readOnly
+            minRows={10}
+            autosize
+          />
+        )}
 
         <Group justify="flex-end">
           {exportType === 'file' && (
-            <Button onClick={handleExport} color="blue" title="Save exported song to file">
+            <Button onClick={handleFileExport} color="blue" title="Save exported song to file">
               Save File
             </Button>
           )}
