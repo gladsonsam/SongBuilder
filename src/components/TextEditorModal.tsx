@@ -93,6 +93,12 @@ export function TextEditorModal({ opened, onClose, sections, onSave }: TextEdito
       <Textarea
         value={text}
         onChange={(e) => setText(e.currentTarget.value)}
+        onKeyDown={(e) => {
+          if (e.ctrlKey && e.key === 'Enter') {
+            e.preventDefault();
+            handleSave();
+          }
+        }}
         minRows={30}
         styles={{
           input: {

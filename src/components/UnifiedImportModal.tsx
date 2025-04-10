@@ -425,6 +425,7 @@ export function UnifiedImportModal({ opened, onClose, onImport, onBatchComplete 
     }
   };
 
+
   return (
     <>
       <Modal
@@ -432,8 +433,16 @@ export function UnifiedImportModal({ opened, onClose, onImport, onBatchComplete 
         onClose={handleClose}
         title="Import Song"
         size="lg"
-        closeOnClickOutside={!isLoading}
-        closeOnEscape={!isLoading}
+        onKeyDown={(e) => {
+          if (e.ctrlKey && e.key === 'Enter') {
+            e.preventDefault();
+            if (!isLoading) {
+              if (importText.trim()) {
+                handleTextImport();
+              }
+            }
+          }
+        }}
       >
       {!isBatchMode ? (
         <Tabs defaultValue="text">

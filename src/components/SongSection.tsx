@@ -175,7 +175,9 @@ export function SongSection({ type, content, number, chords, onChordClick, onCho
                   height: '1.5em',
                   fontFamily: 'monospace', // Use monospace for consistent character width
                   fontSize: '1em', // Match lyrics font size
-                  letterSpacing: '0px' // Ensure exact spacing
+                  letterSpacing: '0px', // Ensure exact spacing
+                  lineHeight: '1em', // Match height for consistent spacing
+                  padding: '0', // Remove padding to ensure exact character alignment
                 }}
               >
                 {/* Drop indicator */}
@@ -193,7 +195,8 @@ export function SongSection({ type, content, number, chords, onChordClick, onCho
                       position: 'absolute',
                       left: `${chord.position}ch`, // Use ch unit for monospace character width
                       transform: 'scale(0.9)', // Slightly smaller chords
-                      transformOrigin: 'left top' // Transform from left edge
+                      transformOrigin: 'left top', // Transform from left edge
+                      marginLeft: '-2px', // Offset to compensate for button padding
                     }}
                     onClick={() => onChordClick?.(chord.text)}
                   />
@@ -208,13 +211,14 @@ export function SongSection({ type, content, number, chords, onChordClick, onCho
                     margin: 0,
                     position: 'absolute',
                     top: '1.75em',
-                    left: 0,
-                    right: 0,
+                    left: '2px', // Match chord line padding
+                    right: '2px', // Match chord line padding
                     lineHeight: 1.2,
                     fontSize: '1em',
                     color: 'var(--mantine-color-dark-8)',
                     fontFamily: 'monospace', // Use monospace for consistent character width
-                    letterSpacing: '0px' // Ensure exact spacing
+                    letterSpacing: '0px', // Ensure exact spacing
+                    padding: '0' // Reset padding
                   }}
                 >
                   {line}

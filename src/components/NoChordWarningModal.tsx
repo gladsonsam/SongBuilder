@@ -17,6 +17,12 @@ export function NoChordWarningModal({ opened, onClose, onContinue, onCancel, son
       title="No Chords Detected"
       centered
       size="md"
+      onKeyDown={(e) => {
+        if (e.ctrlKey && e.key === 'Enter') {
+          e.preventDefault();
+          onContinue();
+        }
+      }}
     >
       <Stack>
         <Group>

@@ -180,6 +180,12 @@ export function ExportModal({ opened, onClose, sections }: ExportModalProps) {
       onClose={onClose}
       title="Export Song"
       size="lg"
+      onKeyDown={(e) => {
+        if (e.ctrlKey && e.key === 'Enter') {
+          e.preventDefault();
+          handleExport();
+        }
+      }}
     >
       <Stack>
         <SegmentedControl

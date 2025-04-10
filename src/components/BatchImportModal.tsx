@@ -148,6 +148,14 @@ export function BatchImportModal({ opened, onClose, onComplete }: BatchImportMod
       size="lg"
       closeOnClickOutside={!isImporting}
       closeOnEscape={!isImporting}
+      onKeyDown={(e) => {
+        if (e.ctrlKey && e.key === 'Enter') {
+          e.preventDefault();
+          if (!isImporting && results.length === 0) {
+            handleFileSelect();
+          }
+        }
+      }}
     >
       <Stack>
         <Text size="sm" c="dimmed">

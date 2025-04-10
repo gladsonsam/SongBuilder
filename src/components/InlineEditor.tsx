@@ -14,6 +14,12 @@ interface InlineEditorProps {
 const MAX_HISTORY = 50;
 
 export function InlineEditor({ section, onSave, onCancel }: InlineEditorProps) {
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.ctrlKey && e.key === 'Enter') {
+      e.preventDefault();
+      handleSave();
+    }
+  };
   // Add a title based on section type
   const sectionTitle = `${section.type.charAt(0).toUpperCase() + section.type.slice(1)}${section.number ? ` ${section.number}` : ''}`;
   // Create a Freeshow-style representation of the section with inline chords
@@ -302,7 +308,7 @@ export function InlineEditor({ section, onSave, onCancel }: InlineEditorProps) {
   };
 
   return (
-    <Stack gap="lg" p="md" style={{ border: '1px solid var(--mantine-color-gray-3)', borderRadius: 'var(--mantine-radius-md)' }}>
+    <Stack gap="lg" p="md" style={{ border: '1px solid var(--mantine-color-gray-3)', borderRadius: 'var(--mantine-radius-md)' }} onKeyDown={handleKeyDown}>
       <Text fw={700} size="lg" mb="xs">
         Edit {sectionTitle}
       </Text>
