@@ -15,7 +15,7 @@
   "dependencies": {
     "@emotion/react": "^11.11.4",
     "@mantine/core": "^7.17.3",
-    "@mantine/hooks": "^7.6.1",
+    "@mantine/hooks": "^7.17.4",
     "@mantine/modals": "^7.17.3",
     "@mantine/notifications": "^7.6.1",
     "@tabler/icons-react": "^3.31.0",
@@ -31,6 +31,7 @@
     "@tonaljs/tonal": "^4.10.0",
     "@types/uuid": "^10.0.0",
     "dexie": "^4.0.11",
+    "jszip": "^3.10.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.22.3",

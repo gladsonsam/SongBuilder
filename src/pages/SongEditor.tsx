@@ -38,6 +38,7 @@ export function SongEditor() {
   const [contentChanged, setContentChanged] = useState(false);
   const [activeTab, setActiveTab] = useState<string | null>('sections');
   const [textEditorOpen, setTextEditorOpen] = useState(false);
+  const [isViewMode, setIsViewMode] = useState(false);
 
   const [editingSectionIndex, setEditingSectionIndex] = useState<number | null>(null);
 
@@ -70,6 +71,11 @@ export function SongEditor() {
   // Load song if editing existing
   useEffect(() => {
     if (id) {
+      // Check URL for view mode parameter
+      const urlParams = new URLSearchParams(window.location.search);
+      const mode = urlParams.get('mode');
+      setIsViewMode(mode === 'view');
+
       // Load directly from the database to avoid context issues
       getSong(id).then(loadedSong => {
         if (loadedSong) {
@@ -327,6 +333,7 @@ export function SongEditor() {
                 variant="filled"
                 color="blue"
                 leftSection={<IconPlus size={16} />}
+                disabled={isViewMode}
               >
                 Add Section
               </Button>
@@ -348,6 +355,7 @@ export function SongEditor() {
             variant="light"
             leftSection={<IconUpload size={16} />}
             onClick={() => setImportModalOpen(true)}
+            disabled={isViewMode}
           >
             Import
           </Button>
@@ -421,13 +429,21 @@ export function SongEditor() {
             <Tabs.Tab value="sections" leftSection={<IconMusic size={16} />}>Sections</Tabs.Tab>
             <Tabs.Tab value="notes" leftSection={<IconNotes size={16} />}>Notes</Tabs.Tab>
           </Tabs.List>
-          <Button
-            variant="light"
-            leftSection={<IconEdit size={16} />}
-            onClick={() => setTextEditorOpen(true)}
-          >
-            Text Edit
-          </Button>
+          <Group>
+            <Button
+              variant="light"
+              leftSection={<IconEdit size={16} />}
+              onClick={() => setTextEditorOpen(true)}
+            >
+              Text Edit
+            </Button>
+            <Button
+              variant="light"
+              onClick={() => setIsViewMode(!isViewMode)}
+            >
+              {isViewMode ? 'Edit Mode' : 'View Mode'}
+            </Button>
+          </Group>
         </Group>
 
         <Tabs.Panel value="sections" pt="md">
@@ -440,8 +456,8 @@ export function SongEditor() {
                   className="section-container"
                 >
                   <div
-                    onClick={() => setEditingSectionIndex(index)}
-                    style={{ cursor: 'pointer' }}
+                    onClick={() => !isViewMode && setEditingSectionIndex(index)}
+                    style={{ cursor: isViewMode ? 'default' : 'pointer' }}
                   >
                     <SongSection
                       type={section.type}
@@ -478,8 +494,8 @@ export function SongEditor() {
                     />
                   </div>
                   
-                  {/* Section controls */}
-                  <div className="section-controls">
+                  {/* Section controls - only show in edit mode */}
+                  {!isViewMode && <div className="section-controls">
                     <Tooltip label="Move Up" withArrow position="left">
                       <ActionIcon 
                         size="md" 
@@ -543,7 +559,7 @@ export function SongEditor() {
                         <IconTrash size={18} />
                       </ActionIcon>
                     </Tooltip>
-                  </div>
+                  </div>}
                 </div>
               ))}
             </Stack>

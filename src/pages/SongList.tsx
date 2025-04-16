@@ -2,11 +2,13 @@ import * as React from 'react';
 import '../components/TagInput.css';
 import { ColoredTag } from '../components/ColoredTag';
 import { Container, Title, Text, Button, Stack, Group, Paper, TextInput, ActionIcon, Skeleton, Checkbox, Menu, MultiSelect } from '@mantine/core';
+import { useMediaQuery } from '@mantine/hooks';
 import { notifications } from '@mantine/notifications';
 import { Link, useNavigate } from 'react-router-dom';
 import { IconPlus, IconSearch, IconTrash, IconEdit, IconDots, IconDownload, IconSortAscending, IconSortDescending, IconTags, IconDatabase, IconUpload } from '@tabler/icons-react';
 import { DatabaseTools } from '../components/DatabaseTools';
 import { UnifiedImportModal } from '../components/UnifiedImportModal';
+import { BulkExportModal } from '../components/BulkExportModal';
 import { getAllSongs, deleteSong, saveSong } from '../utils/db';
 import { getTagColor } from '../utils/tagColors';
 import { toTitleCase } from '../utils/formatters';
@@ -27,6 +29,10 @@ export function SongList() {
   const [availableTags, setAvailableTags] = React.useState<{value: string; label: string}[]>([]);
   const [dbToolsOpen, setDbToolsOpen] = React.useState(false);
   const [importModalOpen, setImportModalOpen] = React.useState(false);
+  const [bulkExportOpen, setBulkExportOpen] = React.useState(false);
+
+  // Responsive: is mobile
+  const isMobile = useMediaQuery('(max-width: 600px)');
 
   // Load songs on mount and set up keyboard listener
   React.useEffect(() => {
@@ -145,35 +151,7 @@ export function SongList() {
     }
   };
 
-  const handleExportSelected = async () => {
-    try {
-      const selectedSongsList = songs.filter(song => selectedSongs.has(song.id));
-      const jsonStr = JSON.stringify(selectedSongsList, null, 2);
-      
-      // Create and trigger download
-      const blob = new Blob([jsonStr], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'selected_songs.json';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-
-      notifications.show({
-        title: 'Success',
-        message: 'Songs exported successfully',
-        color: 'green'
-      });
-    } catch (error) {
-      notifications.show({
-        title: 'Error',
-        message: 'Failed to export songs',
-        color: 'red'
-      });
-    }
-  };
+  // Bulk export modal open/close and selected songs logic handled below
 
   const toggleSelectAll = () => {
     if (selectedSongs.size === filteredSongs.length) {
@@ -328,7 +306,7 @@ export function SongList() {
                 <Button
                   variant="light"
                   leftSection={<IconDownload size={16} />}
-                  onClick={handleExportSelected}
+                  onClick={() => setBulkExportOpen(true)}
                 >
                   Export Selected
                 </Button>
@@ -359,70 +337,135 @@ export function SongList() {
           </Group>
         </Group>
 
-        <Group align="flex-end">
-          <TextInput
-            placeholder="Search titles, artists, or lyrics..."
-            leftSection={<IconSearch size={16} />}
-            value={searchQuery}
-            onChange={(e) => handleSearchChange(e.target.value)}
-            style={{ flex: 1 }}
-            autoFocus
-            id="songs-search"
-          />
-          
-          <MultiSelect
-            data={availableTags}
-            value={selectedTags}
-            onChange={setSelectedTags}
-            placeholder="Filter by tags"
-            searchable
-            clearable
-            leftSection={<IconTags size={16} />}
-            renderOption={({ option }) => (
-              <Group gap="xs">
-                <div
-                  style={{
-                    width: 12,
-                    height: 12,
-                    borderRadius: '50%',
-                    backgroundColor: `var(--mantine-color-${getTagColor(option.value)}-filled)`
-                  }}
-                />
-                <span>{option.label}</span>
-              </Group>
-            )}
-            styles={{
-              pill: {
-                display: 'none'  // Hide the default pills
-              }
-            }}
-          />
-          {/* Display selected tags with colors */}
-          <Group gap="xs" mt="xs">
-            {selectedTags.map((tag) => (
-              <ColoredTag
-                key={tag}
-                tag={tag}
-                size="sm"
-                variant="filled"
-                onClick={() => {
-                  // Remove this tag from selection when clicked
-                  setSelectedTags(selectedTags.filter(t => t !== tag));
-                }}
-                showColorSwatch={false}
-              />
-            ))}
-          </Group>
-          
-          {filteredSongs.length > 0 && (
-            <Checkbox
-              label="Select All"
-              checked={selectedSongs.size === filteredSongs.length}
-              indeterminate={selectedSongs.size > 0 && selectedSongs.size < filteredSongs.length}
-              onChange={toggleSelectAll}
+        {isMobile ? (
+          <Stack gap="xs">
+            <TextInput
+              placeholder="Search titles, artists, or lyrics..."
+              leftSection={<IconSearch size={16} />}
+              value={searchQuery}
+              onChange={(e) => handleSearchChange(e.target.value)}
+              style={{ width: '100%' }}
+              id="songs-search"
+              size="md"
             />
-          )}
-        </Group>
+            <MultiSelect
+              data={availableTags}
+              value={selectedTags}
+              onChange={setSelectedTags}
+              placeholder="Filter by tags"
+              searchable
+              clearable
+              leftSection={<IconTags size={16} />}
+              renderOption={({ option }) => (
+                <Group gap="xs">
+                  <div
+                    style={{
+                      width: 12,
+                      height: 12,
+                      borderRadius: '50%',
+                      backgroundColor: `var(--mantine-color-${getTagColor(option.value)}-filled)`
+                    }}
+                  />
+                  <span>{option.label}</span>
+                </Group>
+              )}
+              styles={{
+                pill: {
+                  display: 'none'
+                },
+                input: {
+                  width: '100%'
+                }
+              }}
+              size="md"
+            />
+            <Group gap="xs" wrap="wrap">
+              {selectedTags.map((tag) => (
+                <ColoredTag
+                  key={tag}
+                  tag={tag}
+                  size="sm"
+                  variant="filled"
+                  onClick={() => {
+                    setSelectedTags(selectedTags.filter(t => t !== tag));
+                  }}
+                  showColorSwatch={false}
+                />
+              ))}
+            </Group>
+            {filteredSongs.length > 0 && (
+              <Checkbox
+                label="Select All"
+                checked={selectedSongs.size === filteredSongs.length}
+                indeterminate={selectedSongs.size > 0 && selectedSongs.size < filteredSongs.length}
+                onChange={toggleSelectAll}
+                size="md"
+              />
+            )}
+          </Stack>
+        ) : (
+          <Group align="flex-end">
+            <TextInput
+              placeholder="Search titles, artists, or lyrics..."
+              leftSection={<IconSearch size={16} />}
+              value={searchQuery}
+              onChange={(e) => handleSearchChange(e.target.value)}
+              style={{ flex: 1 }}
+              autoFocus
+              id="songs-search"
+            />
+            <MultiSelect
+              data={availableTags}
+              value={selectedTags}
+              onChange={setSelectedTags}
+              placeholder="Filter by tags"
+              searchable
+              clearable
+              leftSection={<IconTags size={16} />}
+              renderOption={({ option }) => (
+                <Group gap="xs">
+                  <div
+                    style={{
+                      width: 12,
+                      height: 12,
+                      borderRadius: '50%',
+                      backgroundColor: `var(--mantine-color-${getTagColor(option.value)}-filled)`
+                    }}
+                  />
+                  <span>{option.label}</span>
+                </Group>
+              )}
+              styles={{
+                pill: {
+                  display: 'none'
+                }
+              }}
+            />
+            {/* Display selected tags with colors */}
+            <Group gap="xs" mt="xs">
+              {selectedTags.map((tag) => (
+                <ColoredTag
+                  key={tag}
+                  tag={tag}
+                  size="sm"
+                  variant="filled"
+                  onClick={() => {
+                    setSelectedTags(selectedTags.filter(t => t !== tag));
+                  }}
+                  showColorSwatch={false}
+                />
+              ))}
+            </Group>
+            {filteredSongs.length > 0 && (
+              <Checkbox
+                label="Select All"
+                checked={selectedSongs.size === filteredSongs.length}
+                indeterminate={selectedSongs.size > 0 && selectedSongs.size < filteredSongs.length}
+                onChange={toggleSelectAll}
+              />
+            )}
+          </Group>
+        )}
 
 
 
@@ -580,6 +623,13 @@ export function SongList() {
             </Stack>
           </Paper>
         )}
+        {/* Bulk Export Modal */}
+        <BulkExportModal
+          opened={bulkExportOpen}
+          onClose={() => setBulkExportOpen(false)}
+          songs={songs.filter(song => selectedSongs.has(song.id))}
+        />
+
         {/* Database Tools Modal */}
         <DatabaseTools
           opened={dbToolsOpen}
