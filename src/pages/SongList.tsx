@@ -470,16 +470,22 @@ export function SongList() {
           <Stack gap="md">
             {filteredSongs.map(song => (
               <Paper
-                key={song.id}
-                withBorder
                 p="md"
-                style={{
-                  transition: 'transform 0.2s ease',
-                  ':hover': {
-                    transform: 'translateX(4px)'
+                withBorder
+                shadow="sm"
+                key={song.id}
+                onClick={(e) => {
+                  // Only navigate if not clicking a button, checkbox, or menu
+                  if (
+                    !(e.target as HTMLElement).closest('button') &&
+                    !(e.target as HTMLElement).closest('input[type="checkbox"]') &&
+                    !(e.target as HTMLElement).closest('[role="menu"]')
+                  ) {
+                    navigate(`/songs/${song.id}?mode=view`);
                   }
                 }}
-              >
+                style={{ cursor: 'pointer' }}
+                >
                 <Group justify="space-between" align="center">
                   <Group>
                     <Checkbox
@@ -525,8 +531,10 @@ export function SongList() {
                   </Group>
                   <Group>
                     <Button
-                      component={Link}
-                      to={`/songs/${song.id}`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate(`/songs/${song.id}?mode=edit`);
+                      }}
                       variant="light"
                       leftSection={<IconEdit size={16} />}
                     >
