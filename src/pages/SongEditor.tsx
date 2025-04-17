@@ -433,6 +433,7 @@ export function SongEditor() {
             <Button
               variant="light"
               leftSection={<IconEdit size={16} />}
+              disabled={isViewMode}
               onClick={() => setTextEditorOpen(true)}
             >
               Text Edit
@@ -567,15 +568,16 @@ export function SongEditor() {
         </Tabs.Panel>
 
         <Tabs.Panel value="notes" pt="md">
-          <SongNotes 
-            notes={notes} 
+          <SongNotes
+            notes={notes}
             onChange={(newNotes) => {
               setNotes(newNotes);
               // Force an immediate save when notes change
               if (notes !== newNotes) {
                 setTimeout(() => autoSave(), 100);
               }
-            }} 
+            }}
+            isViewMode={isViewMode}
           />
         </Tabs.Panel>
       </Tabs>

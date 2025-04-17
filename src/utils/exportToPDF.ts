@@ -21,7 +21,7 @@ export async function exportToPDF(song: Song): Promise<Blob> {
   const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
 
   let y = height - 50;
-  const topMargin = 50;
+
   const lineHeight = 20;
 
   // Title

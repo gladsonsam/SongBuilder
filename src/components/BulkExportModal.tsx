@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Modal, Stack, Group, Button, Select, Radio, Text } from '@mantine/core';
 import JSZip from 'jszip';
 import { notifications } from '@mantine/notifications';
