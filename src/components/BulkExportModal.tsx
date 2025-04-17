@@ -3,6 +3,7 @@ import { Modal, Stack, Group, Button, Select, Radio, Text } from '@mantine/core'
 import JSZip from 'jszip';
 import { notifications } from '@mantine/notifications';
 import { exportToShowFile } from '../utils/exporters';
+import { exportToPDF } from '../utils/exportToPDF';
 import type { Song } from '../types/song';
 
 interface BulkExportModalProps {
@@ -12,7 +13,7 @@ interface BulkExportModalProps {
 }
 
 export function BulkExportModal({ opened, onClose, songs }: BulkExportModalProps) {
-  const [fileFormat, setFileFormat] = useState<'freeshow-show'>('freeshow-show');
+  const [fileFormat, setFileFormat] = useState<'freeshow-show' | 'pdf'>('freeshow-show');
   const [exportType, setExportType] = useState<'zip' | 'multiple'>('zip');
   const [isExporting, setIsExporting] = useState(false);
 
@@ -54,6 +55,65 @@ export function BulkExportModal({ opened, onClose, songs }: BulkExportModalProps
           });
           notifications.show({ title: 'Success', message: 'Exported as multiple files', color: 'green' });
         }
+      } else if (fileFormat === 'pdf') {
+        const skipped: string[] = [];
+        if (exportType === 'zip') {
+          const zip = new JSZip();
+          for (const song of songs) {
+            try {
+              const pdfBlob = await exportToPDF(song);
+              const safeTitle = (song.title || 'untitled').replace(/[^a-z0-9]/gi, '_').toLowerCase();
+              zip.file(`${safeTitle}.pdf`, pdfBlob);
+            } catch (e: any) {
+              if (e && e.message && e.message.includes('WinAnsi')) {
+                skipped.push(song.title || 'Untitled Song');
+              } else {
+                throw e;
+              }
+            }
+          }
+          const blob = await zip.generateAsync({ type: 'blob' });
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = 'songs_export.zip';
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          URL.revokeObjectURL(url);
+          let msg = 'Exported as ZIP';
+          if (skipped.length) {
+            msg += `. Skipped: ${skipped.join(', ')} (contains characters not supported by the current PDF font)`;
+          }
+          notifications.show({ title: 'Success', message: msg, color: skipped.length ? 'yellow' : 'green', autoClose: 8000 });
+        } else {
+          // Multiple files: trigger download for each
+          for (const song of songs) {
+            try {
+              const pdfBlob = await exportToPDF(song);
+              const safeTitle = (song.title || 'untitled').replace(/[^a-z0-9]/gi, '_').toLowerCase();
+              const url = URL.createObjectURL(pdfBlob);
+              const link = document.createElement('a');
+              link.href = url;
+              link.download = `${safeTitle}.pdf`;
+              document.body.appendChild(link);
+              link.click();
+              document.body.removeChild(link);
+              URL.revokeObjectURL(url);
+            } catch (e: any) {
+              if (e && e.message && e.message.includes('WinAnsi')) {
+                skipped.push(song.title || 'Untitled Song');
+              } else {
+                throw e;
+              }
+            }
+          }
+          let msg = 'Exported as multiple files';
+          if (skipped.length) {
+            msg += `. Skipped: ${skipped.join(', ')} (contains characters not supported by the current PDF font)`;
+          }
+          notifications.show({ title: 'Success', message: msg, color: skipped.length ? 'yellow' : 'green', autoClose: 8000 });
+        }
       }
       onClose();
     } catch (error) {
@@ -69,10 +129,14 @@ export function BulkExportModal({ opened, onClose, songs }: BulkExportModalProps
       <Stack>
         <Select
           label="File format"
-          data={[{ value: 'freeshow-show', label: 'FreeShow (.show)' }]}
+          data={[
+            { value: 'freeshow-show', label: 'FreeShow (.show)' },
+            { value: 'pdf', label: 'PDF Chord Chart (.pdf)' },
+          ]}
           value={fileFormat}
-          onChange={v => setFileFormat(v as 'freeshow-show')}
-          disabled
+          onChange={v => setFileFormat(v as 'freeshow-show' | 'pdf')}
+          radius="sm"
+          variant="filled"
         />
         <Radio.Group
           label="Export as"
@@ -85,7 +149,7 @@ export function BulkExportModal({ opened, onClose, songs }: BulkExportModalProps
           </Group>
         </Radio.Group>
         <Text size="sm" color="dimmed">
-          This will export {songs.length} song{songs.length !== 1 ? 's' : ''} as FreeShow .show files.
+          This will export {songs.length} song{songs.length !== 1 ? 's' : ''} as {fileFormat === 'pdf' ? 'PDF chord charts' : 'FreeShow .show files'}.
         </Text>
         <Group justify="flex-end">
           <Button variant="default" onClick={onClose} disabled={isExporting}>Cancel</Button>

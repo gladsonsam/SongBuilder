@@ -1,8 +1,9 @@
 import * as React from 'react';
-import { Modal, Stack, Text, Textarea, Button, Group, SegmentedControl, Select, Tabs } from '@mantine/core';
+import { Modal, Stack, Text, Textarea, Button, Group, SegmentedControl, Select } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { Section } from '../types/song';
 import { exportToFreeshowText, exportToUltimateGuitarText, exportToShowFile } from '../utils/exporters';
+import { exportToPDF } from '../utils/exportToPDF';
 
 interface ExportModalProps {
   opened: boolean;
@@ -13,7 +14,7 @@ interface ExportModalProps {
 export function ExportModal({ opened, onClose, sections }: ExportModalProps) {
   const [exportType, setExportType] = React.useState<'text' | 'file'>('text');
   const [textFormat, setTextFormat] = React.useState<'freeshow' | 'ultimate-guitar'>('freeshow');
-  const [fileFormat, setFileFormat] = React.useState<'freeshow-show'>('freeshow-show');
+  const [fileFormat, setFileFormat] = React.useState<'freeshow-show' | 'pdf'>('freeshow-show');
   const [exportedText, setExportedText] = React.useState('');
 
   React.useEffect(() => {
@@ -68,8 +69,9 @@ export function ExportModal({ opened, onClose, sections }: ExportModalProps) {
       // Just update the preview text without triggering download
       if (fileFormat === 'freeshow-show') {
         setExportedText('FreeShow .show file format - click Save File to download');
+      } else if (fileFormat === 'pdf') {
+        setExportedText('PDF chord chart - click Save File to download');
       }
-      // Future file formats can be added here
     } catch (error) {
       console.error('Failed to prepare file export:', error);
       setExportedText('Error preparing file export');
@@ -134,8 +136,30 @@ export function ExportModal({ opened, onClose, sections }: ExportModalProps) {
         text = exportToShowFile(songData, updatedSections);
         fileExtension = '.show';
         fileData = new Blob([text], { type: 'application/json' });
+      } else if (fileFormat === 'pdf') {
+        fileExtension = '.pdf';
       }
-      // Future file formats can be added here
+      
+      if (fileFormat === 'pdf') {
+        // Generate PDF and trigger download
+        exportToPDF({ ...songData, tags: [] }).then((pdfBlob) => {
+          const url = URL.createObjectURL(pdfBlob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = `${fileName}${fileExtension}`;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          URL.revokeObjectURL(url);
+          notifications.show({
+            title: 'Success',
+            message: `Saved as ${fileName}${fileExtension}`,
+            color: 'green',
+            autoClose: 2000
+          });
+        });
+        return;
+      }
       
       if (fileData) {
         // Create download link and trigger it
@@ -199,53 +223,56 @@ export function ExportModal({ opened, onClose, sections }: ExportModalProps) {
         />
 
         {exportType === 'text' ? (
-          <Tabs value={textFormat} onChange={(value) => setTextFormat(value as 'freeshow' | 'ultimate-guitar')}>
-            <Tabs.List>
-              <Tabs.Tab value="freeshow">FreeShow Format</Tabs.Tab>
-              <Tabs.Tab value="ultimate-guitar">Ultimate Guitar Format</Tabs.Tab>
-            </Tabs.List>
-          </Tabs>
+          <>
+            <Select
+              label="Text format"
+              value={textFormat}
+              onChange={(value: string | null) => setTextFormat((value as 'freeshow' | 'ultimate-guitar') || 'freeshow')}
+              data={[
+                { value: 'freeshow', label: 'FreeShow Format' },
+                { value: 'ultimate-guitar', label: 'Ultimate Guitar Format' },
+              ]}
+              variant="filled"
+              radius="sm"
+              mb="xs"
+            />
+            <Text size="sm" c="dimmed">
+              The {textFormat === 'freeshow' ? 'FreeShow' : 'Ultimate Guitar'} formatted text will be automatically copied to your clipboard.
+            </Text>
+            <Textarea
+              value={exportedText}
+              readOnly
+              minRows={10}
+              autosize
+            />
+          </>
         ) : (
           <>
+            <Select
+              label="File format"
+              value={fileFormat}
+              onChange={(value: string | null) => setFileFormat((value as 'freeshow-show' | 'pdf') || 'freeshow-show')}
+              data={[
+                { value: 'freeshow-show', label: 'FreeShow (.show)' },
+                { value: 'pdf', label: 'PDF Chord Chart (.pdf)' },
+              ]}
+              variant="filled"
+              radius="sm"
+              mb="xs"
+            />
             <Text size="sm" c="dimmed">
               Select a file format and click Save File to download.
             </Text>
-            <Select
-              value={fileFormat}
-              onChange={(value) => setFileFormat(value as 'freeshow-show')}
-              data={[
-                { value: 'freeshow-show', label: 'FreeShow .show File' }
-                // More file formats can be added here in the future
-              ]}
-            />
+            <Group justify="flex-end">
+              <Button onClick={handleFileExport} color="blue" title="Save exported song to file">
+                Save File
+              </Button>
+              <Button onClick={onClose} title="Close export dialog">
+                Close
+              </Button>
+            </Group>
           </>
         )}
-
-        {exportType === 'text' && (
-          <Text size="sm" c="dimmed">
-            The {textFormat === 'freeshow' ? 'FreeShow' : 'Ultimate Guitar'} formatted text will be automatically copied to your clipboard.
-          </Text>
-        )}
-
-        {exportType === 'text' && (
-          <Textarea
-            value={exportedText}
-            readOnly
-            minRows={10}
-            autosize
-          />
-        )}
-
-        <Group justify="flex-end">
-          {exportType === 'file' && (
-            <Button onClick={handleFileExport} color="blue" title="Save exported song to file">
-              Save File
-            </Button>
-          )}
-          <Button onClick={onClose} title="Close export dialog">
-            Close
-          </Button>
-        </Group>
       </Stack>
     </Modal>
   );
