@@ -109,7 +109,8 @@ const DIATONIC_CHORDS: Record<string, string[]> = {
 };
 
 /**
- * Detect the key of a song based on the chords using a scoring system
+ * Detect the key of a song based on the chords using an improved scoring system
+ * that considers chord position, frequency, and musical function
  */
 export function detectKey(chords: string[]): string {
   if (!chords.length) return 'C'; // Default to C if no chords
@@ -126,10 +127,25 @@ export function detectKey(chords: string[]): string {
   const keyScores: Record<string, number> = {};
   NOTES.forEach(key => keyScores[key] = 0);
 
-  // Score each key based on diatonic chord matches
+  // Count chord occurrences to find the most common chords
+  const chordCounts: Record<string, number> = {};
+  normalizedChords.forEach(chord => {
+    const root = extractRoot(chord);
+    chordCounts[root] = (chordCounts[root] || 0) + 1;
+  });
+
+  // Score each key based on diatonic chord matches with weighted scoring
   for (const [key, diatonicChords] of Object.entries(DIATONIC_CHORDS)) {
-    normalizedChords.forEach(chord => {
-      // If the chord is in the key's diatonic chords, increase the score
+    // Get the tonic, dominant, and subdominant chords for this key
+    const tonic = diatonicChords[0]; // I chord (e.g., A in A major)
+    const subdominant = diatonicChords[3]; // IV chord (e.g., D in A major)
+    const dominant = diatonicChords[4]; // V chord (e.g., E in A major)
+    
+    normalizedChords.forEach((chord, index) => {
+      // Extract the root of the chord for comparison
+      const chordSuffix = extractSuffix(chord);
+      
+      // Check if the chord is in the key's diatonic chords
       if (diatonicChords.some(diatonicChord => {
         // Match basic chord types (major, minor, diminished)
         const normalizedDiatonic = normalizeChord(diatonicChord);
@@ -137,9 +153,43 @@ export function detectKey(chords: string[]): string {
                chord.replace('m', '') === normalizedDiatonic || // Major version
                chord + 'm' === normalizedDiatonic; // Minor version
       })) {
-        keyScores[key]++;
+        // Base score for diatonic chord
+        keyScores[key] += 1;
+        
+        // Additional scoring based on chord function
+        if (extractRoot(chord) === extractRoot(tonic)) {
+          // Tonic chord gets extra weight
+          keyScores[key] += 2;
+          
+          // First and last chords are often the tonic - give extra weight
+          if (index === 0 || index === normalizedChords.length - 1) {
+            keyScores[key] += 3;
+          }
+        }
+        
+        // Dominant chord (V) gets extra weight, especially if it's a seventh chord
+        if (extractRoot(chord) === extractRoot(dominant)) {
+          keyScores[key] += 1;
+          // If it's a dominant seventh (e.g., E7 in A major)
+          if (chordSuffix.includes('7')) {
+            keyScores[key] += 2;
+          }
+        }
+        
+        // Subdominant chord (IV) gets some extra weight
+        if (extractRoot(chord) === extractRoot(subdominant)) {
+          keyScores[key] += 1;
+        }
       }
     });
+    
+    // Check for common chord progressions in this key
+    // I-IV-V progression (e.g., A-D-E in A major)
+    if (normalizedChords.some(c => extractRoot(c) === extractRoot(tonic)) &&
+        normalizedChords.some(c => extractRoot(c) === extractRoot(subdominant)) &&
+        normalizedChords.some(c => extractRoot(c) === extractRoot(dominant))) {
+      keyScores[key] += 3;
+    }
   }
 
   // Find the key with the highest score
@@ -155,15 +205,9 @@ export function detectKey(chords: string[]): string {
 
   // If no clear winner (all scores are 0), fall back to most common root note
   if (highestScore === 0) {
-    const rootCounts: Record<string, number> = {};
-    normalizedChords.forEach(chord => {
-      const root = extractRoot(chord);
-      rootCounts[root] = (rootCounts[root] || 0) + 1;
-    });
-
     let mostCommonRoot = '';
     let maxCount = 0;
-    for (const [root, count] of Object.entries(rootCounts)) {
+    for (const [root, count] of Object.entries(chordCounts)) {
       if (count > maxCount) {
         maxCount = count;
         mostCommonRoot = root;
@@ -182,8 +226,8 @@ export function getSemitonesBetweenKeys(fromKey: string, toKey: string): number 
   const normalizedFromKey = normalizeChord(fromKey);
   const normalizedToKey = normalizeChord(toKey);
   
-  const fromIndex = NOTES.indexOf(normalizedFromKey);
-  const toIndex = NOTES.indexOf(normalizedToKey);
+  const fromIndex = NOTES.indexOf(extractRoot(normalizedFromKey));
+  const toIndex = NOTES.indexOf(extractRoot(normalizedToKey));
   
   if (fromIndex === -1 || toIndex === -1) {
     return 0; // Invalid keys
@@ -212,11 +256,10 @@ export function parseTransposeInput(input: string, originalKey: string): number 
   
   // Check if it's a key name (e.g., "G", "A#")
   const normalizedInput = normalizeChord(trimmedInput);
-  if (NOTES.includes(normalizedInput)) {
-    // Calculate semitones between original key and target key
-    return getSemitonesBetweenKeys(originalKey, normalizedInput);
+  if (NOTES.includes(extractRoot(normalizedInput))) {
+    // Calculate semitones between original key and target key using full normalized key names
+    return getSemitonesBetweenKeys(normalizeChord(originalKey), normalizedInput);
   }
-  
   // Invalid input
   return 0;
 }
