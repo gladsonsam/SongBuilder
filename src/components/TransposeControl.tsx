@@ -3,6 +3,7 @@ import { TextInput, Tooltip } from '@mantine/core';
 import { useSongs } from '../context/SongContext';
 import './TransposeControl.css';
 import { detectKey } from '../utils/transpose';
+import { KeyFinderModal } from './KeyFinderModal';
 
 // Define chord notes in a chromatic scale
 const NOTES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
@@ -96,6 +97,7 @@ const TransposeControl: React.FC<TransposeControlProps> = () => {
   const [transposeValue, setTransposeValue] = useState(currentTranspose || '');
   const [detectedKey, setDetectedKey] = useState<string>('C');
   const [hasKeyChange, setHasKeyChange] = useState<boolean>(false);
+  const [keyFinderOpen, setKeyFinderOpen] = useState(false);
   
   // Keep local state in sync with context and apply transpose when it changes
   useEffect(() => {
@@ -226,6 +228,13 @@ const TransposeControl: React.FC<TransposeControlProps> = () => {
     applyTranspose(value);
   };
 
+  // Handler for confirming key from KeyFinderModal
+  const handleKeyFinderConfirm = (key: string) => {
+    setTransposeValue(key);
+    setCurrentTranspose(key);
+    applyTranspose(key);
+  };
+
   return (
     <div className="transpose-control">
       <TextInput
@@ -242,6 +251,12 @@ const TransposeControl: React.FC<TransposeControlProps> = () => {
         onChange={handleInputChange}
         placeholder="+2, -3, or G"
         size="md"
+        rightSection={<button type="button" className="key-finder-btn" style={{background:'none',border:'none',cursor:'pointer',padding:0}} onClick={()=>setKeyFinderOpen(true)} title="Open Key Finder">🎹</button>}
+      />
+      <KeyFinderModal
+        opened={keyFinderOpen}
+        onClose={()=>setKeyFinderOpen(false)}
+        onConfirm={handleKeyFinderConfirm}
       />
     </div>
   );
