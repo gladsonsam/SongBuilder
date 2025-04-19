@@ -153,79 +153,83 @@ export function SongSection({ type, content, number, chords, onChordClick, onCho
 
         <Stack gap={0}>
           {lines.map((line, lineIndex) => (
-            <Box 
-              key={lineIndex} 
-              data-line-index={lineIndex}
-              style={{ 
-                position: 'relative',
-                height: line.trim() ? '3em' : '1em', // Taller for lines with content, shorter for empty lines
-                marginBottom: lineIndex < lines.length - 1 ? '0.5em' : 0 // Margin except for last line
-              }}
-              onDragOver={handleDragOver}
-              onDragLeave={handleDragLeave}
-              onDrop={(e) => handleDrop(e, lineIndex)}
-            >
-              {/* Chord line */}
-              <Box 
-                style={{ 
-                  position: 'absolute', 
-                  top: 0, 
-                  left: 0, 
-                  right: 0, 
-                  height: '1.5em',
-                  fontFamily: 'monospace', // Use monospace for consistent character width
-                  fontSize: '1em', // Match lyrics font size
-                  letterSpacing: '0px', // Ensure exact spacing
-                  lineHeight: '1em', // Match height for consistent spacing
-                  padding: '0', // Remove padding to ensure exact character alignment
-                }}
-              >
-                {/* Drop indicator */}
-                {dropIndicator && dropIndicator.line === lineIndex && (
-                  <div 
-                    className="chord-drop-indicator"
-                    style={{ left: `${dropIndicator.position}ch` }}
-                  />
-                )}
-                {chordsByLine[lineIndex]?.map((chord) => (
-                  <ChordButton
-                    key={chord.id}
-                    chord={chord.text}
-                    style={{
-                      position: 'absolute',
-                      left: `${chord.position}ch`, // Use ch unit for monospace character width
-                      transform: 'scale(0.9)', // Slightly smaller chords
-                      transformOrigin: 'left top', // Transform from left edge
-                      marginLeft: '-2px', // Offset to compensate for button padding
-                    }}
-                    onClick={() => onChordClick?.(chord.text)}
-                  />
-                ))}
-              </Box>
-              {/* Lyrics line */}
-              {line.trim() && (
-                <Text 
-                  component="pre" 
-                  style={{ 
-                    whiteSpace: 'pre',
-                    margin: 0,
-                    position: 'absolute',
-                    top: '1.75em',
-                    left: '2px', // Match chord line padding
-                    right: '2px', // Match chord line padding
-                    lineHeight: 1.2,
-                    fontSize: '1em',
-                    color: 'var(--mantine-color-dark-8)',
-                    fontFamily: 'monospace', // Use monospace for consistent character width
-                    letterSpacing: '0px', // Ensure exact spacing
-                    padding: '0' // Reset padding
-                  }}
-                >
-                  {line}
-                </Text>
-              )}
-            </Box>
-          ))}
+  <Box
+    key={lineIndex}
+    data-line-index={lineIndex}
+    style={{
+      position: 'relative',
+      height: line.trim() ? '3em' : '1em',
+      marginBottom: lineIndex < lines.length - 1 ? '0.5em' : 0
+    }}
+    onDragOver={handleDragOver}
+    onDragLeave={handleDragLeave}
+    onDrop={(e) => handleDrop(e, lineIndex)}
+  >
+    {/* Chord line */}
+    <Box
+      style={{
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        height: '1.5em',
+        fontFamily: 'monospace',
+        fontSize: '1em',
+        letterSpacing: '0px',
+        lineHeight: '1em',
+        padding: '0',
+      }}
+    >
+      {/* Drop indicator */}
+      {dropIndicator && dropIndicator.line === lineIndex && (
+        <div
+          className="chord-drop-indicator"
+          style={{ left: `${dropIndicator.position}ch` }}
+        />
+      )}
+      {chordsByLine[lineIndex]?.map((chord) => (
+        <ChordButton
+          key={chord.id}
+          chord={chord.text}
+          style={{
+            position: 'absolute',
+            left: `${chord.position}ch`,
+            fontFamily: 'monospace',
+            fontSize: '1em',
+            letterSpacing: '0px',
+            transform: 'scale(0.9)',
+            transformOrigin: 'left top',
+            marginLeft: 0,
+            padding: 0,
+          }}
+          onClick={() => onChordClick?.(chord.text)}
+        />
+      ))}
+    </Box>
+    {/* Lyrics line */}
+    {line.trim() && (
+      <Text
+        component="pre"
+        style={{
+          whiteSpace: 'pre',
+          margin: 0,
+          position: 'absolute',
+          top: '1.75em',
+          left: 0,
+          right: 0,
+          lineHeight: 1.2,
+          fontSize: '1em',
+          color: 'var(--mantine-color-dark-8)',
+          fontFamily: 'monospace',
+          letterSpacing: '0px',
+          padding: 0,
+        }}
+      >
+        {line}
+      </Text>
+    )}
+  </Box>
+))}
         </Stack>
       </Stack>
     </Paper>
