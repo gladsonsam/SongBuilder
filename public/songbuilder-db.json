@@ -2339,9 +2339,9 @@
       }
     ],
     "originalKey": "C",
-    "currentTranspose": "",
+    "currentTranspose": "G",
     "createdAt": "2025-04-10T01:12:49.278Z",
-    "updatedAt": "2025-04-17T05:52:53.664Z",
+    "updatedAt": "2025-04-19T06:36:35.884Z",
     "id": "2d54k2ns3"
   },
   {
@@ -9747,10 +9747,10 @@
       }
     ],
     "originalKey": "F#",
-    "currentTranspose": "-2",
+    "currentTranspose": "A",
     "notes": "",
     "createdAt": "2025-04-10T01:12:49.276Z",
-    "updatedAt": "2025-04-17T05:56:16.308Z",
+    "updatedAt": "2025-04-19T06:41:44.711Z",
     "id": "58yuu51hn"
   },
   {
@@ -24685,7 +24685,7 @@
     "originalKey": "A",
     "currentTranspose": "",
     "createdAt": "2025-04-10T01:12:49.281Z",
-    "updatedAt": "2025-04-17T06:08:51.390Z",
+    "updatedAt": "2025-04-19T06:51:38.810Z",
     "id": "c4g0v6lls"
   },
   {
@@ -35045,46 +35045,46 @@
       {
         "type": "verse",
         "number": 1,
-        "content": "Light of the world\nYou stepped down into darkness\nOpened my eyes, let me see\n",
+        "content": "Light of the world\nYou stepped down into darkness\nOpened my eyes, let me see\n\n",
         "chords": [
           {
-            "id": "qkbxga8",
+            "id": "chord-0-2",
             "text": "G",
             "position": 2,
             "line": 0
           },
           {
-            "id": "2w2d2hb",
+            "id": "chord-0-15",
             "text": "D",
             "position": 15,
             "line": 0
           },
           {
-            "id": "dchqezg",
+            "id": "chord-1-6",
             "text": "Am",
             "position": 6,
             "line": 1
           },
           {
-            "id": "mck4m2d",
+            "id": "chord-1-24",
             "text": "C",
             "position": 24,
             "line": 1
           },
           {
-            "id": "ab0v1ke",
+            "id": "chord-2-2",
             "text": "G",
             "position": 2,
             "line": 2
           },
           {
-            "id": "pxqxrur",
+            "id": "chord-2-12",
             "text": "D",
             "position": 12,
             "line": 2
           },
           {
-            "id": "f7fqbro",
+            "id": "chord-2-25",
             "text": "C",
             "position": 25,
             "line": 2
@@ -35094,83 +35094,83 @@
       {
         "type": "verse",
         "number": 2,
-        "content": "Beauty that made this heart adore You\nHope of a life spent with You\n\n",
+        "content": "Beauty that made\nThis heart adore You\nHope of a life spent with You\n\n",
         "chords": [
           {
-            "id": "yy07hwh",
+            "id": "chord-0-2",
             "text": "G",
             "position": 2,
             "line": 0
           },
           {
-            "id": "wmdr48t",
+            "id": "chord-0-14",
             "text": "D",
             "position": 14,
             "line": 0
           },
           {
-            "id": "nq6r4sx",
+            "id": "chord-1-7",
             "text": "Am",
-            "position": 24,
-            "line": 0
+            "position": 7,
+            "line": 1
           },
           {
-            "id": "dogi9yh",
+            "id": "chord-1-19",
             "text": "C",
-            "position": 36,
-            "line": 0
+            "position": 19,
+            "line": 1
           },
           {
-            "id": "2c5arq5",
+            "id": "chord-2-2",
             "text": "G",
             "position": 2,
-            "line": 1
+            "line": 2
           },
           {
-            "id": "fve9fd4",
+            "id": "chord-2-12",
             "text": "D",
             "position": 12,
-            "line": 1
+            "line": 2
           },
           {
-            "id": "hmlr1i2",
+            "id": "chord-2-28",
             "text": "C",
             "position": 28,
-            "line": 1
+            "line": 2
           }
         ]
       },
       {
         "type": "chorus",
         "number": 1,
-        "content": "Here I am to worship\nHere I am to bow down\nHere I am to say that You're my God\n",
+        "content": "Here I am to worship\nHere I am to bow down\nHere I am to say that You're my God\n\n",
         "chords": [
           {
-            "id": "jmz57qw",
+            "id": "chord-0-2",
             "text": "C",
             "position": 2,
             "line": 0
           },
           {
-            "id": "3iosr92",
+            "id": "chord-0-15",
             "text": "G",
             "position": 15,
             "line": 0
           },
           {
-            "id": "ta7qfef",
+            "id": "chord-1-15",
             "text": "D",
             "position": 15,
             "line": 1
           },
           {
-            "id": "v1txs79",
+            "id": "chord-2-15",
             "text": "G",
             "position": 15,
             "line": 2
           },
           {
-            "id": "y5jyvg5",
+            "id": "chord-2-34",
             "text": "C",
             "position": 34,
             "line": 2
@@ -35183,25 +35183,25 @@
         "content": "You're altogether lovely\nAltogether worthy\nAltogether wonderful to me\n\n",
         "chords": [
           {
-            "id": "jbywg63",
+            "id": "chord-0-20",
             "text": "G",
             "position": 20,
             "line": 0
           },
           {
-            "id": "jm8ubrn",
+            "id": "chord-1-13",
             "text": "D",
             "position": 13,
             "line": 1
           },
           {
-            "id": "rdm3nei",
+            "id": "chord-2-13",
             "text": "G",
             "position": 13,
             "line": 2
           },
           {
-            "id": "ii9tguo",
+            "id": "chord-2-26",
             "text": "C",
             "position": 26,
             "line": 2
@@ -35211,46 +35211,46 @@
       {
         "type": "verse",
         "number": 3,
-        "content": "King of all days\nOh so highly exalted\nGlorious in Heaven above\n",
+        "content": "King of all days\nOh so highly exalted\nGlorious in Heaven above\n\n",
         "chords": [
           {
-            "id": "f1gvnxp",
+            "id": "chord-0-2",
             "text": "G",
             "position": 2,
             "line": 0
           },
           {
-            "id": "o28og08",
+            "id": "chord-0-14",
             "text": "D",
             "position": 14,
             "line": 0
           },
           {
-            "id": "cg190wd",
+            "id": "chord-1-8",
             "text": "Am",
             "position": 8,
             "line": 1
           },
           {
-            "id": "52givgl",
+            "id": "chord-1-17",
             "text": "C",
             "position": 17,
             "line": 1
           },
           {
-            "id": "i7seds7",
+            "id": "chord-2-2",
             "text": "G",
             "position": 2,
             "line": 2
           },
           {
-            "id": "mx1w0az",
+            "id": "chord-2-13",
             "text": "D",
             "position": 13,
             "line": 2
           },
           {
-            "id": "mc51ze1",
+            "id": "chord-2-22",
             "text": "C",
             "position": 22,
             "line": 2
@@ -35260,83 +35260,83 @@
       {
         "type": "verse",
         "number": 4,
-        "content": "Humbly You came to the earth You created\nAll for loves sake became poor\n\n",
+        "content": "Humbly You came\nTo the earth You created\nAll for loves sake became poor\n\n",
         "chords": [
           {
-            "id": "y2mg5go",
+            "id": "chord-0-2",
             "text": "G",
             "position": 2,
             "line": 0
           },
           {
-            "id": "3pknca8",
+            "id": "chord-0-13",
             "text": "D",
             "position": 13,
             "line": 0
           },
           {
-            "id": "vprydhl",
+            "id": "chord-1-9",
             "text": "Am",
-            "position": 25,
-            "line": 0
+            "position": 9,
+            "line": 1
           },
           {
-            "id": "djqlgof",
+            "id": "chord-1-22",
             "text": "C",
-            "position": 38,
-            "line": 0
+            "position": 22,
+            "line": 1
           },
           {
-            "id": "fejarkg",
+            "id": "chord-2-2",
             "text": "G",
             "position": 2,
-            "line": 1
+            "line": 2
           },
           {
-            "id": "wwc4r9g",
+            "id": "chord-2-16",
             "text": "D",
             "position": 16,
-            "line": 1
+            "line": 2
           },
           {
-            "id": "a14dtbi",
+            "id": "chord-2-27",
             "text": "C",
             "position": 27,
-            "line": 1
+            "line": 2
           }
         ]
       },
       {
         "type": "chorus",
         "number": 3,
-        "content": "Here I am to worship\nHere I am to bow down\nHere I am to say that You're my God\n",
+        "content": "Here I am to worship\nHere I am to bow down\nHere I am to say that You're my God\n\n",
         "chords": [
           {
-            "id": "xw8whh9",
+            "id": "chord-0-2",
             "text": "C",
             "position": 2,
             "line": 0
           },
           {
-            "id": "33t8wze",
+            "id": "chord-0-15",
             "text": "G",
             "position": 15,
             "line": 0
           },
           {
-            "id": "mt4lbi3",
+            "id": "chord-1-15",
             "text": "D",
             "position": 15,
             "line": 1
           },
           {
-            "id": "pop322k",
+            "id": "chord-2-15",
             "text": "G",
             "position": 15,
             "line": 2
           },
           {
-            "id": "0fl0sq1",
+            "id": "chord-2-34",
             "text": "C",
             "position": 34,
             "line": 2
@@ -35349,25 +35349,25 @@
         "content": "You're altogether lovely\nAltogether worthy\nAltogether wonderful to me\n\n",
         "chords": [
           {
-            "id": "7qhekhs",
+            "id": "chord-0-20",
             "text": "G",
             "position": 20,
             "line": 0
           },
           {
-            "id": "lsm88fm",
+            "id": "chord-1-13",
             "text": "D",
             "position": 13,
             "line": 1
           },
           {
-            "id": "d3t91so",
+            "id": "chord-2-13",
             "text": "G",
             "position": 13,
             "line": 2
           },
           {
-            "id": "hws78q3",
+            "id": "chord-2-26",
             "text": "C",
             "position": 26,
             "line": 2
@@ -35377,144 +35377,144 @@
       {
         "type": "bridge",
         "number": 1,
-        "content": "I'll never know how much it cost\nTo see my sin upon that cross\n",
+        "content": "I'll never know\nHow much it cost\nTo see my sin\nUpon that cross\n\n",
         "chords": [
           {
-            "id": "uu5tg6p",
+            "id": "chord-0-4",
             "text": "D",
             "position": 4,
             "line": 0
           },
           {
-            "id": "p588xp7",
+            "id": "chord-0-13",
             "text": "G",
             "position": 13,
             "line": 0
           },
           {
-            "id": "k6kp8gl",
+            "id": "chord-1-6",
             "text": "C",
-            "position": 22,
-            "line": 0
+            "position": 6,
+            "line": 1
           },
           {
-            "id": "2rv3t6s",
+            "id": "chord-1-13",
             "text": "G",
-            "position": 29,
-            "line": 0
+            "position": 13,
+            "line": 1
           },
           {
-            "id": "xwv7nsx",
+            "id": "chord-2-4",
             "text": "D",
             "position": 4,
-            "line": 1
+            "line": 2
           },
           {
-            "id": "3jorub8",
+            "id": "chord-2-12",
             "text": "G",
             "position": 12,
-            "line": 1
+            "line": 2
           },
           {
-            "id": "1dlshhs",
+            "id": "chord-3-2",
             "text": "C",
-            "position": 16,
-            "line": 1
+            "position": 2,
+            "line": 3
           },
           {
-            "id": "4xf5zd4",
+            "id": "chord-3-12",
             "text": "G",
-            "position": 26,
-            "line": 1
+            "position": 12,
+            "line": 3
           }
         ]
       },
       {
         "type": "bridge",
         "number": 2,
-        "content": "I'll never know how much it cost\nTo see my sin upon that cross\n\n",
+        "content": "I'll never know\nHow much it cost\nTo see my sin\nUpon that cross\n\n",
         "chords": [
           {
-            "id": "w6j80tu",
+            "id": "chord-0-4",
             "text": "D",
             "position": 4,
             "line": 0
           },
           {
-            "id": "3faoeff",
+            "id": "chord-0-13",
             "text": "G",
             "position": 13,
             "line": 0
           },
           {
-            "id": "p0rvjq3",
+            "id": "chord-1-6",
             "text": "C",
-            "position": 22,
-            "line": 0
+            "position": 6,
+            "line": 1
           },
           {
-            "id": "rvhpx4l",
+            "id": "chord-1-13",
             "text": "G",
-            "position": 29,
-            "line": 0
+            "position": 13,
+            "line": 1
           },
           {
-            "id": "9rk4q1u",
+            "id": "chord-2-4",
             "text": "D",
             "position": 4,
-            "line": 1
+            "line": 2
           },
           {
-            "id": "9ekhg3m",
+            "id": "chord-2-12",
             "text": "G",
             "position": 12,
-            "line": 1
+            "line": 2
           },
           {
-            "id": "zm04jbn",
+            "id": "chord-3-2",
             "text": "C",
-            "position": 16,
-            "line": 1
+            "position": 2,
+            "line": 3
           },
           {
-            "id": "pl5tanf",
+            "id": "chord-3-12",
             "text": "G",
-            "position": 26,
-            "line": 1
+            "position": 12,
+            "line": 3
           }
         ]
       },
       {
         "type": "chorus",
         "number": 5,
-        "content": "Here I am to worship\nHere I am to bow down\nHere I am to say that You're my God\n",
+        "content": "Here I am to worship\nHere I am to bow down\nHere I am to say that You're my God\n\n",
         "chords": [
           {
-            "id": "gkm9s7x",
+            "id": "chord-0-2",
             "text": "C",
             "position": 2,
             "line": 0
           },
           {
-            "id": "f088k54",
+            "id": "chord-0-15",
             "text": "G",
             "position": 15,
             "line": 0
           },
           {
-            "id": "uj7y47t",
+            "id": "chord-1-15",
             "text": "D",
             "position": 15,
             "line": 1
           },
           {
-            "id": "xptac5u",
+            "id": "chord-2-15",
             "text": "G",
             "position": 15,
             "line": 2
           },
           {
-            "id": "nsdc3t6",
+            "id": "chord-2-34",
             "text": "C",
             "position": 34,
             "line": 2
@@ -35524,28 +35524,28 @@
       {
         "type": "chorus",
         "number": 6,
-        "content": "You're altogether lovely\nAltogether worthy\nAltogether wonderful to me\n\n",
+        "content": "You're altogether lovely\nAltogether worthy\nAltogether wonderful to me\n",
         "chords": [
           {
-            "id": "aacbr31",
+            "id": "chord-0-20",
             "text": "G",
             "position": 20,
             "line": 0
           },
           {
-            "id": "1uahvvm",
+            "id": "chord-1-13",
             "text": "D",
             "position": 13,
             "line": 1
           },
           {
-            "id": "1dqlkcz",
+            "id": "chord-2-13",
             "text": "G",
             "position": 13,
             "line": 2
           },
           {
-            "id": "j5nde1d",
+            "id": "chord-2-26",
             "text": "C",
             "position": 26,
             "line": 2
@@ -35558,7 +35558,7 @@
     ],
     "id": "jj5sjuihw",
     "createdAt": "2025-04-16T04:23:52.934Z",
-    "updatedAt": "2025-04-16T04:24:33.409Z",
+    "updatedAt": "2025-04-19T14:27:20.012Z",
     "notes": "",
     "originalSections": [
       {
@@ -36073,7 +36073,7 @@
       }
     ],
     "originalKey": "C",
-    "currentTranspose": ""
+    "currentTranspose": "F#"
   },
   {
     "title": "Ancient Of Days (Blessing and Honour)",
@@ -38206,7 +38206,7 @@
     ],
     "id": "kg79h6pcn",
     "createdAt": "2025-04-16T02:19:21.078Z",
-    "updatedAt": "2025-04-17T05:52:26.678Z",
+    "updatedAt": "2025-04-19T14:06:20.960Z",
     "notes": "",
     "originalSections": [
       {
@@ -38984,7 +38984,7 @@
       }
     ],
     "originalKey": "D",
-    "currentTranspose": ""
+    "currentTranspose": "E"
   },
   {
     "title": "Holy Forever",
@@ -38993,360 +38993,374 @@
       {
         "type": "verse",
         "number": 1,
-        "content": "\nA thousand generations falling down in worship\nTo sing the song of ages to the Lamb\nAnd all who've gone before us and all who will believe\nWill sing the song of ages to the Lamb\n",
+        "content": "A thousand generations \nFalling down in worship\nTo sing the song of ages to the Lamb\n",
         "chords": [
           {
-            "id": "6y0qrwv",
+            "id": "xiythlz",
             "text": "C",
             "position": 4,
-            "line": 1
+            "line": 0
           },
           {
-            "id": "cqq4iv1",
+            "id": "yzipbah",
             "text": "F",
-            "position": 25,
+            "position": 2,
             "line": 1
           },
           {
-            "id": "vr23qyn",
+            "id": "fl90w1p",
             "text": "C",
-            "position": 43,
+            "position": 20,
             "line": 1
           },
           {
-            "id": "ub6doty",
+            "id": "djgcx2a",
             "text": "Am",
             "position": 5,
             "line": 2
           },
           {
-            "id": "7yhhz5h",
+            "id": "qxifaug",
             "text": "G",
             "position": 22,
             "line": 2
           },
           {
-            "id": "fexk28e",
+            "id": "lmu0p52",
             "text": "F",
             "position": 36,
             "line": 2
-          },
-          {
-            "id": "2rr42f6",
-            "text": "C",
-            "position": 6,
-            "line": 3
-          },
-          {
-            "id": "gpinv35",
-            "text": "F",
-            "position": 36,
-            "line": 3
-          },
-          {
-            "id": "n36p4ak",
-            "text": "C",
-            "position": 52,
-            "line": 3
-          },
-          {
-            "id": "tklc594",
-            "text": "Am",
-            "position": 7,
-            "line": 4
-          },
-          {
-            "id": "ponrcon",
-            "text": "G",
-            "position": 25,
-            "line": 4
-          },
-          {
-            "id": "uhyh9gs",
-            "text": "F",
-            "position": 38,
-            "line": 4
-          }
-        ]
-      },
-      {
-        "type": "pre-chorus",
-        "number": 1,
-        "content": "\nYour name is the highest\nYour name is the greatest\nYour name stands above them all\n",
-        "chords": [
-          {
-            "id": "ez5rzjy",
-            "text": "F",
-            "position": 7,
-            "line": 1
-          },
-          {
-            "id": "tyog4b8",
-            "text": "Am",
-            "position": 24,
-            "line": 1
-          },
-          {
-            "id": "n3jzj2b",
-            "text": "G",
-            "position": 7,
-            "line": 2
-          },
-          {
-            "id": "bwh659z",
-            "text": "Am",
-            "position": 7,
-            "line": 3
-          },
-          {
-            "id": "tqdmfho",
-            "text": "F",
-            "position": 30,
-            "line": 3
-          }
-        ]
-      },
-      {
-        "type": "pre-chorus",
-        "number": 2,
-        "content": "All thrones and dominions\nAll powers and positions\nYour name stands above them all\n\n\n",
-        "chords": [
-          {
-            "id": "d3piaqt",
-            "text": "F",
-            "position": 6,
-            "line": 0
-          },
-          {
-            "id": "jfr0jfb",
-            "text": "Am",
-            "position": 25,
-            "line": 0
-          },
-          {
-            "id": "2kee0ml",
-            "text": "G",
-            "position": 6,
-            "line": 1
-          },
-          {
-            "id": "xvj5b0p",
-            "text": "Am",
-            "position": 7,
-            "line": 2
-          },
-          {
-            "id": "myxesnd",
-            "text": "Dm",
-            "position": 30,
-            "line": 2
-          }
-        ]
-      },
-      {
-        "type": "chorus",
-        "number": 1,
-        "content": "\nAnd the angels cry: Holy\nAll creation cries: Holy\nYou are lifted high, hooly\nHoly forever\n\n\n",
-        "chords": [
-          {
-            "id": "fs7nei4",
-            "text": "F",
-            "position": 18,
-            "line": 1
-          },
-          {
-            "id": "blzk8vh",
-            "text": "Am",
-            "position": 22,
-            "line": 1
-          },
-          {
-            "id": "7tgkmv6",
-            "text": "G",
-            "position": 24,
-            "line": 1
-          },
-          {
-            "id": "ze3r49c",
-            "text": "C/E",
-            "position": 17,
-            "line": 2
-          },
-          {
-            "id": "0o0cga1",
-            "text": "Am",
-            "position": 24,
-            "line": 2
-          },
-          {
-            "id": "vni09h6",
-            "text": "Dm",
-            "position": 18,
-            "line": 3
-          },
-          {
-            "id": "kvg0p3r",
-            "text": "G",
-            "position": 26,
-            "line": 3
-          },
-          {
-            "id": "7zeokmj",
-            "text": "C",
-            "position": 9,
-            "line": 4
           }
         ]
       },
       {
         "type": "verse",
         "number": 2,
-        "content": "\nIf you've been forgiven and if you've been redeemed\nSing the song forever to the Lamb\nIf you walk in freedom and if you bear His name\nSing the song forever to the Lamb\nWe'll sing the song forever and amen\n\n\n",
+        "content": "And all who've gone before us \nAnd all who will believe\nWill sing the song of ages to the Lamb\n",
         "chords": [
           {
-            "id": "chord-1-0",
+            "id": "2hnsvcj",
             "text": "C",
-            "position": 2,
+            "position": 6,
+            "line": 0
+          },
+          {
+            "id": "j1uky2i",
+            "text": "F",
+            "position": 6,
             "line": 1
           },
           {
-            "id": "chord-1-1",
-            "text": "F",
-            "position": 30,
+            "id": "znlgjw9",
+            "text": "C",
+            "position": 22,
             "line": 1
           },
           {
-            "id": "chord-1-2",
-            "text": "C",
-            "position": 47,
-            "line": 1
-          },
-          {
-            "id": "chord-2-0",
+            "id": "ikc3q3u",
             "text": "Am",
-            "position": 2,
+            "position": 7,
             "line": 2
           },
           {
-            "id": "chord-2-1",
-            "text": "G",
-            "position": 19,
-            "line": 2
-          },
-          {
-            "id": "chord-2-2",
-            "text": "F",
-            "position": 33,
-            "line": 2
-          },
-          {
-            "id": "chord-3-0",
-            "text": "C",
-            "position": 2,
-            "line": 3
-          },
-          {
-            "id": "chord-3-1",
-            "text": "F",
-            "position": 29,
-            "line": 3
-          },
-          {
-            "id": "chord-3-2",
-            "text": "C",
-            "position": 47,
-            "line": 3
-          },
-          {
-            "id": "chord-4-0",
-            "text": "Am",
-            "position": 2,
-            "line": 4
-          },
-          {
-            "id": "chord-4-1",
-            "text": "G",
-            "position": 19,
-            "line": 4
-          },
-          {
-            "id": "chord-4-2",
-            "text": "F",
-            "position": 33,
-            "line": 4
-          },
-          {
-            "id": "chord-5-0",
-            "text": "Am",
-            "position": 8,
-            "line": 5
-          },
-          {
-            "id": "chord-5-1",
+            "id": "32eagdm",
             "text": "G",
             "position": 25,
-            "line": 5
+            "line": 2
           },
           {
-            "id": "chord-5-2",
+            "id": "tkesxkz",
+            "text": "F",
+            "position": 38,
+            "line": 2
+          }
+        ]
+      },
+      {
+        "type": "pre-chorus",
+        "number": 1,
+        "content": "Your name is the highest\nYour name is the greatest\nYour name stands above them all\n",
+        "chords": [
+          {
+            "id": "gqxq4w1",
+            "text": "F",
+            "position": 7,
+            "line": 0
+          },
+          {
+            "id": "1bxt22c",
+            "text": "Am",
+            "position": 24,
+            "line": 0
+          },
+          {
+            "id": "n1stikv",
+            "text": "G",
+            "position": 7,
+            "line": 1
+          },
+          {
+            "id": "wb1fid2",
+            "text": "Am",
+            "position": 7,
+            "line": 2
+          },
+          {
+            "id": "926cl3n",
+            "text": "F",
+            "position": 30,
+            "line": 2
+          }
+        ]
+      },
+      {
+        "type": "pre-chorus",
+        "number": 2,
+        "content": "All thrones and dominions\nAll powers and positions\nYour name stands above them all\n\n",
+        "chords": [
+          {
+            "id": "5glzcam",
+            "text": "F",
+            "position": 6,
+            "line": 0
+          },
+          {
+            "id": "og2h4zf",
+            "text": "Am",
+            "position": 25,
+            "line": 0
+          },
+          {
+            "id": "5of0qa8",
+            "text": "G",
+            "position": 6,
+            "line": 1
+          },
+          {
+            "id": "16d58jf",
+            "text": "Am",
+            "position": 7,
+            "line": 2
+          },
+          {
+            "id": "x0im8x8",
+            "text": "Dm",
+            "position": 30,
+            "line": 2
+          }
+        ]
+      },
+      {
+        "type": "chorus",
+        "number": 1,
+        "content": "And the angels cry: \"Holy\"\nAll creation cries: \"Holy\"\nYou are lifted high, Holy\nHoly forever\n",
+        "chords": [
+          {
+            "id": "3s2b7xc",
+            "text": "F",
+            "position": 18,
+            "line": 0
+          },
+          {
+            "id": "o8zw04c",
+            "text": "Am",
+            "position": 23,
+            "line": 0
+          },
+          {
+            "id": "dbqb7u7",
+            "text": "G",
+            "position": 25,
+            "line": 0
+          },
+          {
+            "id": "gkiv9fl",
+            "text": "C/E",
+            "position": 17,
+            "line": 1
+          },
+          {
+            "id": "63v1kuv",
+            "text": "Am",
+            "position": 25,
+            "line": 1
+          },
+          {
+            "id": "5nivl8l",
+            "text": "Dm",
+            "position": 18,
+            "line": 2
+          },
+          {
+            "id": "jcnctic",
+            "text": "G",
+            "position": 25,
+            "line": 2
+          },
+          {
+            "id": "w4a6fbv",
+            "text": "C",
+            "position": 9,
+            "line": 3
+          }
+        ]
+      },
+      {
+        "type": "verse",
+        "number": 3,
+        "content": "If you've been forgiven \nIf you've been redeemed\nSing the song forever to the Lamb\n",
+        "chords": [
+          {
+            "id": "0u0bg2o",
+            "text": "C",
+            "position": 2,
+            "line": 0
+          },
+          {
+            "id": "omulccw",
+            "text": "F",
+            "position": 2,
+            "line": 1
+          },
+          {
+            "id": "aza2kja",
+            "text": "C",
+            "position": 19,
+            "line": 1
+          },
+          {
+            "id": "89zbjew",
+            "text": "Am",
+            "position": 2,
+            "line": 2
+          },
+          {
+            "id": "b3oxor4",
+            "text": "G",
+            "position": 19,
+            "line": 2
+          },
+          {
+            "id": "sf716k9",
+            "text": "F",
+            "position": 33,
+            "line": 2
+          }
+        ]
+      },
+      {
+        "type": "verse",
+        "number": 4,
+        "content": "If you walk in freedom \nIf you bear His name\nSing the song forever to the Lamb\nWe'll sing the song forever and amen\n",
+        "chords": [
+          {
+            "id": "lowvb1j",
+            "text": "C",
+            "position": 2,
+            "line": 0
+          },
+          {
+            "id": "3pia7k9",
+            "text": "F",
+            "position": 2,
+            "line": 1
+          },
+          {
+            "id": "y6zh20y",
+            "text": "C",
+            "position": 20,
+            "line": 1
+          },
+          {
+            "id": "gjx0zph",
+            "text": "Am",
+            "position": 2,
+            "line": 2
+          },
+          {
+            "id": "0ilb2w4",
+            "text": "G",
+            "position": 19,
+            "line": 2
+          },
+          {
+            "id": "gzexxmz",
+            "text": "F",
+            "position": 33,
+            "line": 2
+          },
+          {
+            "id": "ghpqgle",
+            "text": "Am",
+            "position": 8,
+            "line": 3
+          },
+          {
+            "id": "n66khan",
+            "text": "G",
+            "position": 25,
+            "line": 3
+          },
+          {
+            "id": "ujfc9ou",
             "text": "F",
             "position": 36,
-            "line": 5
+            "line": 3
           }
         ]
       },
       {
         "type": "chorus",
         "number": 2,
-        "content": "\nAnd the angels cry: Holy\nAll creation cries: Holy\nYou are lifted high, hooly\nHoly forever\n\n\n",
+        "content": "And the angels cry: \"Holy\"\nAll creation cries: \"Holy\"\nYou are lifted high, Holy\nHoly forever\n",
         "chords": [
           {
-            "id": "pvan5hq",
+            "id": "f1dwhlo",
             "text": "F",
             "position": 18,
-            "line": 1
+            "line": 0
           },
           {
-            "id": "bwde38q",
+            "id": "d34psz7",
             "text": "Am",
-            "position": 22,
-            "line": 1
+            "position": 23,
+            "line": 0
           },
           {
-            "id": "730a45t",
+            "id": "p41f5x3",
             "text": "G",
-            "position": 24,
-            "line": 1
+            "position": 25,
+            "line": 0
           },
           {
-            "id": "qrsss6u",
+            "id": "f7gs5e0",
             "text": "C/E",
             "position": 17,
-            "line": 2
+            "line": 1
           },
           {
-            "id": "fgqhz1g",
+            "id": "jtl14p7",
             "text": "Am",
-            "position": 24,
-            "line": 2
+            "position": 25,
+            "line": 1
           },
           {
-            "id": "uql0xke",
+            "id": "yjncajm",
             "text": "Dm",
             "position": 18,
-            "line": 3
+            "line": 2
           },
           {
-            "id": "mxv0sum",
+            "id": "ss26dq1",
             "text": "G",
-            "position": 26,
-            "line": 3
+            "position": 25,
+            "line": 2
           },
           {
-            "id": "abogbyo",
+            "id": "c50lvxj",
             "text": "C",
             "position": 9,
-            "line": 4
+            "line": 3
           }
         ]
       },
@@ -39356,55 +39370,55 @@
         "content": "Hear your people sing: Holy\nTo the King of Kings: Holy\nYou will always be holy\nHoly forever\n",
         "chords": [
           {
-            "id": "2stbmmw",
+            "id": "chord-0-15",
             "text": "C/E",
             "position": 15,
             "line": 0
           },
           {
-            "id": "emu4mpl",
+            "id": "chord-0-20",
             "text": "F",
             "position": 20,
             "line": 0
           },
           {
-            "id": "40geu3k",
+            "id": "chord-0-25",
             "text": "Am",
             "position": 25,
             "line": 0
           },
           {
-            "id": "wb9yphv",
+            "id": "chord-0-27",
             "text": "G",
             "position": 27,
             "line": 0
           },
           {
-            "id": "jyyd7jm",
+            "id": "chord-1-18",
             "text": "C/E",
             "position": 18,
             "line": 1
           },
           {
-            "id": "mh7qud4",
+            "id": "chord-1-26",
             "text": "Am",
             "position": 26,
             "line": 1
           },
           {
-            "id": "utpvv6s",
+            "id": "chord-2-18",
             "text": "Dm",
             "position": 18,
             "line": 2
           },
           {
-            "id": "qh3cyhe",
+            "id": "chord-2-23",
             "text": "G",
             "position": 23,
             "line": 2
           },
           {
-            "id": "j32pw5u",
+            "id": "chord-3-9",
             "text": "C",
             "position": 9,
             "line": 3
@@ -39858,14 +39872,14 @@
       }
     ],
     "originalKey": "C",
-    "currentTranspose": "-2",
+    "currentTranspose": "G",
     "tags": [
       "holy",
       "icpf"
     ],
     "notes": "<p style=\"text-align: left\">as</p>",
     "createdAt": "2025-04-10T01:12:49.277Z",
-    "updatedAt": "2025-04-10T01:12:49.277Z",
+    "updatedAt": "2025-04-19T14:25:25.904Z",
     "id": "kru0pbfr5"
   },
   {
@@ -43718,7 +43732,7 @@
     ],
     "id": "l7ziknvc4",
     "createdAt": "2025-04-16T04:15:26.833Z",
-    "updatedAt": "2025-04-17T05:52:41.616Z",
+    "updatedAt": "2025-04-19T14:08:22.968Z",
     "notes": "",
     "originalSections": [
       {
@@ -44101,7 +44115,7 @@
       }
     ],
     "originalKey": "D",
-    "currentTranspose": ""
+    "currentTranspose": "E"
   },
   {
     "title": "FREE!",
@@ -45791,7 +45805,7 @@
     "originalKey": "A",
     "currentTranspose": "",
     "createdAt": "2025-04-10T01:12:49.255Z",
-    "updatedAt": "2025-04-17T05:56:58.947Z",
+    "updatedAt": "2025-04-19T06:42:19.914Z",
     "id": "lbvtuexnj"
   },
   {
@@ -53655,7 +53669,7 @@
     ],
     "id": "qmiiwqgbl",
     "createdAt": "2025-04-17T05:53:16.639Z",
-    "updatedAt": "2025-04-17T05:55:46.275Z",
+    "updatedAt": "2025-04-19T06:36:47.092Z",
     "notes": "",
     "originalSections": [
       {
@@ -54312,7 +54326,7 @@
       }
     ],
     "originalKey": "C",
-    "currentTranspose": ""
+    "currentTranspose": "G"
   },
   {
     "title": "Worthy",
@@ -59888,9 +59902,9 @@
       }
     ],
     "originalKey": "C",
-    "currentTranspose": "",
+    "currentTranspose": "G",
     "createdAt": "2025-04-10T01:12:49.271Z",
-    "updatedAt": "2025-04-16T02:17:35.060Z",
+    "updatedAt": "2025-04-19T06:34:04.975Z",
     "id": "txbpwqkwn"
   },
   {
@@ -60455,7 +60469,7 @@
     ],
     "id": "vijrz99s7",
     "createdAt": "2025-04-17T05:57:45.761Z",
-    "updatedAt": "2025-04-17T05:59:34.591Z",
+    "updatedAt": "2025-04-19T06:42:29.853Z",
     "notes": "",
     "originalSections": [
       {
@@ -66311,10 +66325,10 @@
       }
     ],
     "originalKey": "C",
-    "currentTranspose": "",
+    "currentTranspose": "C",
     "notes": "",
     "createdAt": "2025-04-10T01:12:49.265Z",
-    "updatedAt": "2025-04-17T05:56:08.478Z",
+    "updatedAt": "2025-04-19T06:40:37.082Z",
     "id": "wzsb71kzp"
   },
   {
