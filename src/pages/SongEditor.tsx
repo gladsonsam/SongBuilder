@@ -20,6 +20,9 @@ import { SongNotes } from '../components/SongNotes';
 import { TextEditorModal } from '../components/TextEditorModal';
 
 export function SongEditor() {
+  // ...existing hooks...
+  // Local state for temporary transpose in view mode
+  const [viewTranspose, setViewTranspose] = useState<string>('');
   const navigate = useNavigate();
   const { id } = useParams();
   // Only use the context for the initial load and final save, not for ongoing edits
@@ -67,6 +70,13 @@ export function SongEditor() {
       setEditingSectionIndex(numberedSections.length - 1);
     }, 100);
   };
+
+  // Reset viewTranspose when song changes or mode changes
+  useEffect(() => {
+    if (isViewMode) {
+      setViewTranspose(song.transposedKey || song.currentTranspose || '');
+    }
+  }, [id, isViewMode, song.transposedKey, song.currentTranspose]);
 
   // Load song if editing existing
   useEffect(() => {
@@ -304,6 +314,29 @@ export function SongEditor() {
     }
   };
 
+  // ESC key shortcut: close modals or save & navigate back
+  useEffect(() => {
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        if (textEditorOpen) {
+          setTextEditorOpen(false);
+        } else if (importModalOpen) {
+          setImportModalOpen(false);
+        } else if (exportModalOpen) {
+          setExportModalOpen(false);
+        } else {
+          if (contentChanged) {
+            autoSave().then(() => navigate('/songs'));
+          } else {
+            navigate('/songs');
+          }
+        }
+      }
+    };
+    document.addEventListener('keydown', handleEsc);
+    return () => document.removeEventListener('keydown', handleEsc);
+  }, [textEditorOpen, importModalOpen, exportModalOpen, contentChanged, navigate]);
+
   return (
     <Stack>
       <Group justify="space-between">
@@ -402,7 +435,21 @@ export function SongEditor() {
           <Grid.Col span={{ base: 12, md: 6 }}>
             <Grid>
               <Grid.Col span={12}>
-                {id && <TransposeControl />}
+                {id && (
+  <TransposeControl
+    value={isViewMode ? (typeof viewTranspose === 'string' ? viewTranspose : (song.transposedKey || song.currentTranspose || '')) : (song.transposedKey || song.currentTranspose || '')}
+    onChange={val => {
+      if (isViewMode) {
+        setViewTranspose(val);
+      } else {
+        // In edit mode, update the song's transposedKey
+        setSong(prev => ({ ...prev, transposedKey: val }));
+      }
+    }}
+    isViewMode={isViewMode}
+    originalKey={song.originalKey}
+  />
+)}
               </Grid.Col>
               <Grid.Col span={12}>
                 <TagInput

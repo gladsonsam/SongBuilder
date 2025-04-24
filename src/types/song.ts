@@ -20,8 +20,10 @@ export interface Song {
   createdAt?: string;
   updatedAt?: string;
   originalKey?: string;
-  currentTranspose?: string;
+  transposedKey?: string; // renamed from currentTranspose
   originalSections?: Section[]; // Store original sections before transposition
   tags?: string[]; // Array of tags for categorizing songs
   notes?: string; // Rich text notes for the song
+  // For backward compatibility:
+  currentTranspose?: string;
 }

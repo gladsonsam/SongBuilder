@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { TextInput, Tooltip } from '@mantine/core';
-import { useSongs } from '../context/SongContext';
+
 import './TransposeControl.css';
 import { detectKey } from '../utils/transpose';
 import { KeyFinderModal } from './KeyFinderModal';
@@ -92,41 +92,34 @@ interface TransposeControlProps {
   // No props needed for the simplified version
 }
 
-const TransposeControl: React.FC<TransposeControlProps> = () => {
-  const { currentTranspose, setCurrentTranspose, songs } = useSongs();
-  const [transposeValue, setTransposeValue] = useState(currentTranspose || '');
-  const [detectedKey, setDetectedKey] = useState<string>('C');
+interface TransposeControlProps {
+  value: string;
+  onChange: (value: string) => void;
+  isViewMode?: boolean;
+  originalKey?: string;
+}
+
+const TransposeControl: React.FC<TransposeControlProps> = ({ value, onChange, isViewMode, originalKey }) => {
+  const [transposeValue, setTransposeValue] = useState(value || '');
+  const [detectedKey, setDetectedKey] = useState<string>(originalKey || 'C');
   const [hasKeyChange, setHasKeyChange] = useState<boolean>(false);
   const [keyFinderOpen, setKeyFinderOpen] = useState(false);
-  
-  // Keep local state in sync with context and apply transpose when it changes
+
+  // Keep local state in sync with parent value
   useEffect(() => {
-    setTransposeValue(currentTranspose || '');
-    
-    // Apply the transpose value from context when it changes or on initial load
-    if (currentTranspose) {
-      // Add a small delay to ensure DOM elements are rendered
-      setTimeout(() => {
-        applyTranspose(currentTranspose);
-      }, 100);
-    }
-  }, [currentTranspose]);
-  
-  // Apply transpose on initial load and detect key
+    setTransposeValue(value || '');
+    // Apply the transpose value from parent when it changes
+    setTimeout(() => {
+      applyTranspose(value || '');
+    }, 100);
+  }, [value]);
+
+  // Detect key on mount and when value changes
   useEffect(() => {
-    if (currentTranspose) {
-      // Add a small delay to ensure DOM elements are rendered
-      setTimeout(() => {
-        applyTranspose(currentTranspose);
-      }, 100);
-    }
-    
-    // Detect the key from chord elements
     setTimeout(() => {
       detectSongKey();
     }, 200);
-// Listen for changes in songs or their sections to re-detect key
-}, [currentTranspose, songs]);
+  }, [value]);
   
   // Function to detect the key of the song
   const detectSongKey = () => {
@@ -222,8 +215,7 @@ const TransposeControl: React.FC<TransposeControlProps> = () => {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.currentTarget.value.toUpperCase();
     setTransposeValue(value);
-    setCurrentTranspose(value); // Update context state
-    
+    onChange(value); // Notify parent of change
     // Apply the transpose to the DOM
     applyTranspose(value);
   };
@@ -231,7 +223,7 @@ const TransposeControl: React.FC<TransposeControlProps> = () => {
   // Handler for confirming key from KeyFinderModal
   const handleKeyFinderConfirm = (key: string) => {
     setTransposeValue(key);
-    setCurrentTranspose(key);
+    onChange(key);
     applyTranspose(key);
   };
 
