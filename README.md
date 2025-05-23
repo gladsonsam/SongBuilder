@@ -1,6 +1,6 @@
 # SongBuilder
 
-A powerful web application for managing and formatting song lyrics with chords. Supports multiple formats including Ultimate Guitar and Freeshow. Fully vibe-coded 😀
+A powerful web application for managing and formatting song lyrics with chords. Supports multiple formats including Ultimate Guitar and Freeshow. 
 
 ## Features
 
