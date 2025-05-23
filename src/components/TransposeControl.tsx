@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { TextInput, Tooltip } from '@mantine/core';
-import { useSongs } from '../context/SongContext';
 import './TransposeControl.css';
 import { detectKey } from '../utils/transpose';
 
@@ -88,34 +87,33 @@ function transposeChord(chord: string, semitones: number): string {
 }
 
 interface TransposeControlProps {
-  // No props needed for the simplified version
+  transposedKey: string;
+  originalKey?: string;
+  onChange: (newKey: string) => void;
+  isViewMode?: boolean;
 }
 
-const TransposeControl: React.FC<TransposeControlProps> = () => {
-  const { currentTranspose, setCurrentTranspose } = useSongs();
-  const [transposeValue, setTransposeValue] = useState(currentTranspose || '');
-  const [detectedKey, setDetectedKey] = useState<string>('C');
+const TransposeControl: React.FC<TransposeControlProps> = ({
+  transposedKey,
+  originalKey,
+  onChange,
+  isViewMode,
+}) => {
+  const [transposeValue, setTransposeValue] = useState(transposedKey || '');
+  const [detectedKey, setDetectedKey] = useState<string>(originalKey || 'C');
   const [hasKeyChange, setHasKeyChange] = useState<boolean>(false);
-  
-  // Keep local state in sync with context and apply transpose when it changes
+  // Keep local state in sync with the transposedKey prop
   useEffect(() => {
-    setTransposeValue(currentTranspose || '');
-    
-    // Apply the transpose value from context when it changes or on initial load
-    if (currentTranspose) {
-      // Add a small delay to ensure DOM elements are rendered
-      setTimeout(() => {
-        applyTranspose(currentTranspose);
-      }, 100);
-    }
-  }, [currentTranspose]);
-  
+    setTransposeValue(transposedKey || '');
+  }, [transposedKey]);
+
   // Apply transpose on initial load and detect key
   useEffect(() => {
-    if (currentTranspose) {
+    // Apply the transpose value from prop when it changes or on initial load
+    if (transposedKey) {
       // Add a small delay to ensure DOM elements are rendered
       setTimeout(() => {
-        applyTranspose(currentTranspose);
+        applyTranspose(transposedKey);
       }, 100);
     }
     
@@ -182,9 +180,9 @@ const TransposeControl: React.FC<TransposeControlProps> = () => {
     // If empty value, reset to original chords
     if (value === '') {
       chordElements.forEach(element => {
-        const originalChord = element.getAttribute('data-original');
-        if (originalChord) {
-          element.textContent = originalChord;
+        const originalChordAttr = element.getAttribute('data-original');
+        if (originalChordAttr) {
+          element.textContent = originalChordAttr;
         }
       });
       return;
@@ -192,13 +190,15 @@ const TransposeControl: React.FC<TransposeControlProps> = () => {
     
     // Calculate semitones to transpose
     let semitones = 0;
+    const baseKey = originalKey || detectedKey || 'C'; // Use originalKey if available, else detectedKey, fallback to C
+
     if (value.startsWith('+') || value.startsWith('-') || !isNaN(parseInt(value, 10))) {
       // Handle numeric input (with or without + sign)
       semitones = parseInt(value, 10) || 0;
-    } else if (NOTES.includes(value)) {
-      // It's a key name, calculate difference from C (default key)
-      const fromIndex = NOTES.indexOf('C'); // Default to C as base key
-      const toIndex = NOTES.indexOf(value);
+    } else if (NOTES.includes(normalizeChord(value))) {
+      // It's a key name, calculate difference from baseKey
+      const fromIndex = NOTES.indexOf(normalizeChord(baseKey));
+      const toIndex = NOTES.indexOf(normalizeChord(value));
       if (fromIndex !== -1 && toIndex !== -1) {
         semitones = (toIndex - fromIndex + 12) % 12;
       }
@@ -220,10 +220,10 @@ const TransposeControl: React.FC<TransposeControlProps> = () => {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.currentTarget.value.toUpperCase();
     setTransposeValue(value);
-    setCurrentTranspose(value); // Update context state
+    onChange(value); // Call the onChange prop from the parent
     
-    // Apply the transpose to the DOM
-    applyTranspose(value);
+    // Apply the transpose to the DOM - this might be redundant if parent handles re-render based on new key
+    applyTranspose(value); 
   };
 
   return (
@@ -242,6 +242,7 @@ const TransposeControl: React.FC<TransposeControlProps> = () => {
         onChange={handleInputChange}
         placeholder="+2, -3, or G"
         size="md"
+        readOnly={isViewMode}
       />
     </div>
   );

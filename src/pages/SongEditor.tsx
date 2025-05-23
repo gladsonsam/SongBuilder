@@ -461,9 +461,9 @@ export function SongEditor() {
               <Grid.Col span={12}>
                 {id && (
                   <TransposeControl
-                    value={song.transposedKey || ''}
+                    transposedKey={song.transposedKey || ''}
                     originalKey={song.originalKey}
-                    onChange={val => {
+                    onChange={(val: string) => {
                       // Always update the song's transposedKey with the new value
                       setSong(prev => {
                         const updated = { ...prev, transposedKey: val };
