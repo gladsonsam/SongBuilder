@@ -7,7 +7,7 @@ interface ChordButtonProps extends Omit<ButtonProps, 'children'> {
   onClick?: (chord: string) => void;
 }
 
-export function ChordButton({ chord, style, onClick, ...props }: ChordButtonProps) {
+export function ChordButton({ chord, style, onClick, readOnly = false, ...props }: ChordButtonProps & { readOnly?: boolean }) {
   // Store the original chord text for transposition
   const originalChord = chord;
   
@@ -54,13 +54,13 @@ export function ChordButton({ chord, style, onClick, ...props }: ChordButtonProp
         height: 'auto',
         padding: '2px 6px',
         fontWeight: 600,
-        cursor: 'grab',
+        cursor: readOnly ? 'default' : 'grab',
         ...style 
       }}
       onClick={onClick ? () => onClick(originalChord) : undefined}
-      draggable={true}
-      onDragStart={handleDragStart}
-      onDragEnd={handleDragEnd}
+      draggable={!readOnly}
+      onDragStart={readOnly ? undefined : handleDragStart}
+      onDragEnd={readOnly ? undefined : handleDragEnd}
       {...props}
     >
       {chord}

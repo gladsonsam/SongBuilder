@@ -20,13 +20,10 @@ import { SongNotes } from '../components/SongNotes';
 import { TextEditorModal } from '../components/TextEditorModal';
 
 export function SongEditor() {
-  // ...existing hooks...
-  // Local state for temporary transpose in view mode
-  const [viewTranspose, setViewTranspose] = useState<string>('');
   const navigate = useNavigate();
   const { id } = useParams();
   // Only use the context for the initial load and final save, not for ongoing edits
-  const { updateSong: updateContextSong, currentTranspose } = useSongs();
+  const { updateSong: updateContextSong } = useSongs();
 
   // State
   const [song, setSong] = useState<Song>({ title: '', artist: '', sections: [], tags: [] });
@@ -71,12 +68,7 @@ export function SongEditor() {
     }, 100);
   };
 
-  // Reset viewTranspose when song changes or mode changes
-  useEffect(() => {
-    if (isViewMode) {
-      setViewTranspose(song.transposedKey || song.currentTranspose || '');
-    }
-  }, [id, isViewMode, song.transposedKey, song.currentTranspose]);
+  // No need to reset transpose - it's now always attached to the song
 
   // Load song if editing existing
   useEffect(() => {
@@ -90,7 +82,7 @@ export function SongEditor() {
       getSong(id).then(loadedSong => {
         if (loadedSong) {
           setSong(loadedSong);
-          // Initialize the separate title and artist state
+          // Only update local state if loading a new song (id change)
           setTitle(loadedSong.title || '');
           setArtist(loadedSong.artist || '');
           setTags(loadedSong.tags || []);
@@ -104,6 +96,13 @@ export function SongEditor() {
           color: 'red'
         });
       });
+    } else {
+      // New song: clear all fields
+      setSong({ title: '', artist: '', sections: [], tags: [] });
+      setTitle('');
+      setArtist('');
+      setTags([]);
+      setNotes('');
     }
   }, [id]);
   
@@ -144,49 +143,22 @@ export function SongEditor() {
     if (!song.id && !title && !artist && song.sections.length === 0) {
       return;
     }
-    
     // Set a flag that content has changed and needs saving
     setContentChanged(true);
-    
-  }, [song, title, artist, tags, notes]); // Track when content changes
+  }, [song.sections, title, artist, tags, notes]); // Only trigger on section or local state changes
   
   const handleImport = (sections: Section[], metadata?: { title?: string; artist?: string }) => {
     // Update song sections
     setSong(prev => ({ ...prev, sections }));
-    
-    console.log('handleImport received metadata:', metadata);
-    
     // If metadata is provided from the import (e.g., from .show files), update title and artist
     if (metadata) {
-      console.log('Processing metadata in handleImport');
       if (metadata.title) {
-        console.log('Setting title to:', metadata.title);
-        // Force a direct DOM update to ensure the title is set
-        setTimeout(() => {
-          setTitle(metadata.title || '');
-          // Also try to directly update the input field
-          const titleInput = document.querySelector('input[placeholder="Enter song title"]') as HTMLInputElement;
-          if (titleInput) {
-            titleInput.value = metadata.title || '';
-            console.log('Directly updated title input to:', metadata.title);
-          }
-        }, 100);
+        setTitle(metadata.title || '');
       }
       if (metadata.artist) {
-        console.log('Setting artist to:', metadata.artist);
-        // Force a direct DOM update to ensure the artist is set
-        setTimeout(() => {
-          setArtist(metadata.artist || '');
-          // Also try to directly update the input field
-          const artistInput = document.querySelector('input[placeholder="Enter artist name"]') as HTMLInputElement;
-          if (artistInput) {
-            artistInput.value = metadata.artist || '';
-            console.log('Directly updated artist input to:', metadata.artist);
-          }
-        }, 100);
+        setArtist(metadata.artist || '');
       }
     }
-    
     setImportModalOpen(false);
   };
 
@@ -226,7 +198,7 @@ export function SongEditor() {
       const numberedSections = updateSectionNumbers([...song.sections]);
       
       // Create a song object with the current title and artist values
-      const updatedSong = {
+      let updatedSong = {
         ...song,
         title: title,  // Use the separate title state
         artist: artist, // Use the separate artist state
@@ -234,6 +206,60 @@ export function SongEditor() {
         notes: notes, // Use the separate notes state
         sections: numberedSections // Use the numbered sections
       };
+
+      // --- Transpose chords to match transposedKey if set ---
+      if (updatedSong.transposedKey && updatedSong.originalKey && updatedSong.sections) {
+        const NOTES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+        const fromIndex = NOTES.indexOf(updatedSong.originalKey);
+        const toIndex = NOTES.indexOf(updatedSong.transposedKey);
+        let semitones = 0;
+        if (fromIndex !== -1 && toIndex !== -1) {
+          semitones = (toIndex - fromIndex + 12) % 12;
+        }
+        function transposeChord(chord: string, semitones: number): string {
+          const FLAT_TO_SHARP: Record<string, string> = {
+            'Db': 'C#', 'Eb': 'D#', 'Gb': 'F#', 'Ab': 'G#', 'Bb': 'A#',
+          };
+          function normalizeChord(chord: string): string {
+            for (const [flat, sharp] of Object.entries(FLAT_TO_SHARP)) {
+              if (chord.startsWith(flat)) {
+                return chord.replace(flat, sharp);
+              }
+            }
+            return chord;
+          }
+          function extractRoot(chord: string): string {
+            if (chord.length > 1 && chord[1] === '#') return chord.substring(0, 2);
+            return chord[0];
+          }
+          function extractSuffix(chord: string): string {
+            if (chord.length > 1 && chord[1] === '#') return chord.substring(2);
+            return chord.substring(1);
+          }
+          const normalizedChord = normalizeChord(chord);
+          if (normalizedChord.includes('/')) {
+            const [mainChord, bassNote] = normalizedChord.split('/');
+            const transposedMain = transposeChord(mainChord, semitones);
+            const transposedBass = transposeChord(bassNote, semitones);
+            return `${transposedMain}/${transposedBass}`;
+          }
+          const rootNote = extractRoot(normalizedChord);
+          const suffix = extractSuffix(normalizedChord);
+          const rootIndex = NOTES.indexOf(rootNote);
+          if (rootIndex === -1) return chord;
+          const transposedIndex = (rootIndex + semitones + 12) % 12;
+          return NOTES[transposedIndex] + suffix;
+        }
+        // Transpose all chords in all sections
+        updatedSong.sections = updatedSong.sections.map(section => ({
+          ...section,
+          chords: section.chords.map(chordObj => ({
+            ...chordObj,
+            text: transposeChord(chordObj.text, semitones),
+          }))
+        }));
+      }
+      // --- END transpose logic ---
       
       // If this is the first save, store the original sections
       if (!updatedSong.originalSections) {
@@ -254,8 +280,7 @@ export function SongEditor() {
         updatedSong.originalKey = originalKey;
       }
       
-      // Add the current transpose value
-      updatedSong.currentTranspose = currentTranspose || '';
+      // No need to track currentTranspose separately anymore - just use transposedKey
       
       // Make sure originalSections and originalKey are included if they weren't set above
       if (!updatedSong.originalSections) {
@@ -411,7 +436,6 @@ export function SongEditor() {
       {/* Song metadata card with modern design */}
       <Paper p="md" radius="md" withBorder shadow="sm">
         <Grid gutter="md">
-          {/* Title and Artist section */}
           <Grid.Col span={{ base: 12, md: 6 }}>
             <TextInput
               label="Title"
@@ -420,6 +444,7 @@ export function SongEditor() {
               placeholder="Enter song title"
               size="md"
               leftSection={<IconMusic size={18} />}
+              readOnly={isViewMode}
             />
             <div style={{ marginTop: '8px' }}>
               <ArtistInput
@@ -427,29 +452,28 @@ export function SongEditor() {
                 value={artist}
                 onChange={setArtist}
                 placeholder="Enter artist name"
+                readOnly={isViewMode}
               />
             </div>
           </Grid.Col>
-          
-          {/* Transpose and Tags section */}
           <Grid.Col span={{ base: 12, md: 6 }}>
             <Grid>
               <Grid.Col span={12}>
                 {id && (
-  <TransposeControl
-    value={isViewMode ? (typeof viewTranspose === 'string' ? viewTranspose : (song.transposedKey || song.currentTranspose || '')) : (song.transposedKey || song.currentTranspose || '')}
-    onChange={val => {
-      if (isViewMode) {
-        setViewTranspose(val);
-      } else {
-        // In edit mode, update the song's transposedKey
-        setSong(prev => ({ ...prev, transposedKey: val }));
-      }
-    }}
-    isViewMode={isViewMode}
-    originalKey={song.originalKey}
-  />
-)}
+                  <TransposeControl
+                    value={song.transposedKey || ''}
+                    originalKey={song.originalKey}
+                    onChange={val => {
+                      // Always update the song's transposedKey with the new value
+                      setSong(prev => {
+                        const updated = { ...prev, transposedKey: val };
+                        return updated;
+                      });
+                      setContentChanged(true);
+                    }}
+                    isViewMode={isViewMode}
+                  />
+                )}
               </Grid.Col>
               <Grid.Col span={12}>
                 <TagInput
@@ -507,7 +531,7 @@ export function SongEditor() {
                     onClick={() => !isViewMode && setEditingSectionIndex(index)}
                     style={{ cursor: isViewMode ? 'default' : 'pointer' }}
                   >
-                    <SongSection
+                    <SongSection readOnly={isViewMode}
                       type={section.type}
                       content={section.content}
                       number={section.number}

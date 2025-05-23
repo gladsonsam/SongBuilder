@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { TextInput, Tooltip } from '@mantine/core';
-
+import { useSongs } from '../context/SongContext';
 import './TransposeControl.css';
 import { detectKey } from '../utils/transpose';
-import { KeyFinderModal } from './KeyFinderModal';
 
 // Define chord notes in a chromatic scale
 const NOTES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
@@ -92,34 +91,39 @@ interface TransposeControlProps {
   // No props needed for the simplified version
 }
 
-interface TransposeControlProps {
-  value: string;
-  onChange: (value: string) => void;
-  isViewMode?: boolean;
-  originalKey?: string;
-}
-
-const TransposeControl: React.FC<TransposeControlProps> = ({ value, onChange, isViewMode, originalKey }) => {
-  const [transposeValue, setTransposeValue] = useState(value || '');
-  const [detectedKey, setDetectedKey] = useState<string>(originalKey || 'C');
+const TransposeControl: React.FC<TransposeControlProps> = () => {
+  const { currentTranspose, setCurrentTranspose } = useSongs();
+  const [transposeValue, setTransposeValue] = useState(currentTranspose || '');
+  const [detectedKey, setDetectedKey] = useState<string>('C');
   const [hasKeyChange, setHasKeyChange] = useState<boolean>(false);
-  const [keyFinderOpen, setKeyFinderOpen] = useState(false);
-
-  // Keep local state in sync with parent value
+  
+  // Keep local state in sync with context and apply transpose when it changes
   useEffect(() => {
-    setTransposeValue(value || '');
-    // Apply the transpose value from parent when it changes
-    setTimeout(() => {
-      applyTranspose(value || '');
-    }, 100);
-  }, [value]);
-
-  // Detect key on mount and when value changes
+    setTransposeValue(currentTranspose || '');
+    
+    // Apply the transpose value from context when it changes or on initial load
+    if (currentTranspose) {
+      // Add a small delay to ensure DOM elements are rendered
+      setTimeout(() => {
+        applyTranspose(currentTranspose);
+      }, 100);
+    }
+  }, [currentTranspose]);
+  
+  // Apply transpose on initial load and detect key
   useEffect(() => {
+    if (currentTranspose) {
+      // Add a small delay to ensure DOM elements are rendered
+      setTimeout(() => {
+        applyTranspose(currentTranspose);
+      }, 100);
+    }
+    
+    // Detect the key from chord elements
     setTimeout(() => {
       detectSongKey();
     }, 200);
-  }, [value]);
+  }, []);
   
   // Function to detect the key of the song
   const detectSongKey = () => {
@@ -174,7 +178,7 @@ const TransposeControl: React.FC<TransposeControlProps> = ({ value, onChange, is
     // Find all chord elements on the page
     const chordElements = document.querySelectorAll('.chord');
     if (chordElements.length === 0) return; // No chord elements found yet
-  
+    
     // If empty value, reset to original chords
     if (value === '') {
       chordElements.forEach(element => {
@@ -185,27 +189,28 @@ const TransposeControl: React.FC<TransposeControlProps> = ({ value, onChange, is
       });
       return;
     }
-  
+    
     // Calculate semitones to transpose
     let semitones = 0;
     if (value.startsWith('+') || value.startsWith('-') || !isNaN(parseInt(value, 10))) {
       // Handle numeric input (with or without + sign)
       semitones = parseInt(value, 10) || 0;
     } else if (NOTES.includes(value)) {
-      // It's a key name, calculate difference from detectedKey (not always C)
-      const fromIndex = NOTES.indexOf(detectedKey);
+      // It's a key name, calculate difference from C (default key)
+      const fromIndex = NOTES.indexOf('C'); // Default to C as base key
       const toIndex = NOTES.indexOf(value);
       if (fromIndex !== -1 && toIndex !== -1) {
         semitones = (toIndex - fromIndex + 12) % 12;
       }
     }
-  
+    
     // Apply transposition to all chord elements
     chordElements.forEach(element => {
       const originalChord = element.getAttribute('data-original') || element.textContent || '';
       if (!element.getAttribute('data-original')) {
         element.setAttribute('data-original', originalChord);
       }
+      
       // Apply transposition
       element.textContent = transposeChord(originalChord, semitones);
     });
@@ -215,16 +220,10 @@ const TransposeControl: React.FC<TransposeControlProps> = ({ value, onChange, is
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.currentTarget.value.toUpperCase();
     setTransposeValue(value);
-    onChange(value); // Notify parent of change
+    setCurrentTranspose(value); // Update context state
+    
     // Apply the transpose to the DOM
     applyTranspose(value);
-  };
-
-  // Handler for confirming key from KeyFinderModal
-  const handleKeyFinderConfirm = (key: string) => {
-    setTransposeValue(key);
-    onChange(key);
-    applyTranspose(key);
   };
 
   return (
@@ -232,7 +231,7 @@ const TransposeControl: React.FC<TransposeControlProps> = ({ value, onChange, is
       <TextInput
         label={
           <Tooltip
-            label={`Original key: ${detectedKey}${hasKeyChange ? ' (Key changes detected)' : ''}`}
+            label={`Detected Key: ${detectedKey}${hasKeyChange ? ' (Key changes detected)' : ''}`}
             position="top"
             withArrow
           >
@@ -243,12 +242,6 @@ const TransposeControl: React.FC<TransposeControlProps> = ({ value, onChange, is
         onChange={handleInputChange}
         placeholder="+2, -3, or G"
         size="md"
-        rightSection={<button type="button" className="key-finder-btn" style={{background:'none',border:'none',cursor:'pointer',padding:0}} onClick={()=>setKeyFinderOpen(true)} title="Open Key Finder">🎹</button>}
-      />
-      <KeyFinderModal
-        opened={keyFinderOpen}
-        onClose={()=>setKeyFinderOpen(false)}
-        onConfirm={handleKeyFinderConfirm}
       />
     </div>
   );

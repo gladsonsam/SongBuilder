@@ -226,8 +226,8 @@ export function getSemitonesBetweenKeys(fromKey: string, toKey: string): number 
   const normalizedFromKey = normalizeChord(fromKey);
   const normalizedToKey = normalizeChord(toKey);
   
-  const fromIndex = NOTES.indexOf(extractRoot(normalizedFromKey));
-  const toIndex = NOTES.indexOf(extractRoot(normalizedToKey));
+  const fromIndex = NOTES.indexOf(normalizedFromKey);
+  const toIndex = NOTES.indexOf(normalizedToKey);
   
   if (fromIndex === -1 || toIndex === -1) {
     return 0; // Invalid keys
@@ -256,10 +256,11 @@ export function parseTransposeInput(input: string, originalKey: string): number 
   
   // Check if it's a key name (e.g., "G", "A#")
   const normalizedInput = normalizeChord(trimmedInput);
-  if (NOTES.includes(extractRoot(normalizedInput))) {
-    // Calculate semitones between original key and target key using full normalized key names
-    return getSemitonesBetweenKeys(normalizeChord(originalKey), normalizedInput);
+  if (NOTES.includes(normalizedInput)) {
+    // Calculate semitones between original key and target key
+    return getSemitonesBetweenKeys(originalKey, normalizedInput);
   }
+  
   // Invalid input
   return 0;
 }

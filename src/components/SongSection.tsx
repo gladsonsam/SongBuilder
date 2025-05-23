@@ -14,7 +14,7 @@ interface SongSectionProps {
   onChordMove?: (chordId: string, lineIndex: number, newPosition: number) => void;
 }
 
-export function SongSection({ type, content, number, chords, onChordClick, onChordMove }: SongSectionProps) {
+export function SongSection({ type, content, number, chords, onChordClick, onChordMove, readOnly = false }: SongSectionProps & { readOnly?: boolean }) {
   const { settings } = useSettings();
   const sectionColor = settings.colors[type] || 'blue';
   
@@ -203,6 +203,7 @@ export function SongSection({ type, content, number, chords, onChordClick, onCho
             padding: 0,
           }}
           onClick={() => onChordClick?.(chord.text)}
+          readOnly={readOnly}
         />
       ))}
     </Box>

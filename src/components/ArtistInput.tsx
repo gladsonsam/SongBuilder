@@ -11,7 +11,7 @@ interface ArtistInputProps {
   label?: string;
 }
 
-export function ArtistInput({ value = '', onChange, placeholder = 'Add artist...', label }: ArtistInputProps) {
+export function ArtistInput({ value = '', onChange, placeholder = 'Add artist...', label, readOnly = false }: ArtistInputProps & { readOnly?: boolean }) {
   const [inputValue, setInputValue] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [artists, setArtists] = useState<string[]>([]);
@@ -110,7 +110,7 @@ export function ArtistInput({ value = '', onChange, placeholder = 'Add artist...
             variant="filled"
             color="blue"
             rightSection={
-              <CloseButton 
+              !readOnly && <CloseButton 
                 size="xs" 
                 radius="xl" 
                 color="blue" 
@@ -134,8 +134,8 @@ export function ArtistInput({ value = '', onChange, placeholder = 'Add artist...
               ref={inputRef}
               type="text"
               value={inputValue}
-              onChange={handleInputChange}
-              onKeyDown={handleInputKeyDown}
+              onChange={readOnly ? undefined : handleInputChange}
+              onKeyDown={readOnly ? undefined : handleInputKeyDown}
               onFocus={() => setShowSuggestions(inputValue.length > 0)}
               onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
               placeholder={artistArray.length > 0 ? 'Add another artist...' : placeholder}
@@ -148,6 +148,7 @@ export function ArtistInput({ value = '', onChange, placeholder = 'Add artist...
                 fontSize: '14px',
                 color: 'inherit'
               }}
+              readOnly={readOnly}
             />
           </div>
         </div>

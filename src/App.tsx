@@ -17,6 +17,23 @@ import '@mantine/notifications/styles.css';
 export default function App() {
   const [opened, setOpened] = React.useState(false);
 
+  // Detect if we're on mobile (Mantine's 'sm' breakpoint)
+  const isMobile = window.matchMedia('(max-width: 48em)').matches;
+
+  // Overlay style
+  const overlayStyle: React.CSSProperties = {
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    width: '100vw',
+    height: '100vh',
+    backgroundColor: 'rgba(0,0,0,0.35)',
+    zIndex: 1200,
+    transition: 'opacity 0.25s',
+    opacity: opened ? 1 : 0,
+    pointerEvents: opened ? 'auto' : 'none',
+  };
+
   return (
     <MantineProvider
       defaultColorScheme="dark"
@@ -45,6 +62,15 @@ export default function App() {
               padding={{ base: 'sm', sm: 'md' }}
               layout="alt"
             >
+              {/* Overlay for mobile sidebar */}
+              {isMobile && opened && (
+                <div
+                  style={overlayStyle}
+                  onClick={() => setOpened(false)}
+                  aria-label="Close sidebar overlay"
+                />
+              )}
+
               <AppShell.Header>
                 <MainHeader opened={opened} onToggle={() => setOpened(!opened)} />
               </AppShell.Header>
