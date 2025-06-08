@@ -13,12 +13,12 @@ export interface Section {
 }
 
 export interface Song {
-  id?: string;
+  id: string;
   title: string;
   artist: string;
   sections: Section[];
-  createdAt?: string;
-  updatedAt?: string;
+  createdAt: string;
+  updatedAt: string;
   originalKey?: string;
   transposedKey?: string; // renamed from currentTranspose
   originalSections?: Section[]; // Store original sections before transposition

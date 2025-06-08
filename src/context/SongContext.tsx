@@ -2,21 +2,15 @@ import { createContext, useContext, useState } from 'react';
 import type { ReactNode } from 'react';
 import { transposeChord, detectKey } from '../utils/transpose';
 
-import type { Song as SongType, Section } from '../utils/appwriteDb';
-
-// Extended Song type with originalKey for transposing
-export interface Song extends SongType {
-  originalKey?: string;
-  notes?: string; // Rich text notes for the song
-}
+import type { Song, Section } from '../types/song';
 
 interface SongContextType {
   songs: Song[];
-  addSong: (song: Omit<Song, 'id'>) => void;
+  addSong: (song: Omit<Song, 'id' | 'createdAt' | 'updatedAt'>) => void;
   updateSong: (id: string, song: Partial<Song>) => void;
   deleteSong: (id: string) => void;
   getSong: (id: string) => Song | undefined;
-  importFromText: (text: string) => Omit<Song, 'id'>;
+  importFromText: (text: string) => Omit<Song, 'id' | 'createdAt' | 'updatedAt'>;
   transposeSong: (id: string, transposeValue: string) => void;
   currentTranspose: string;
   setCurrentTranspose: (value: string) => void;
@@ -24,7 +18,7 @@ interface SongContextType {
 
 const SongContext = createContext<SongContextType | undefined>(undefined);
 
-function parseFreeShowFormat(text: string): Omit<Song, 'id'> {
+function parseFreeShowFormat(text: string): Omit<Song, 'id' | 'createdAt' | 'updatedAt'> {
   const lines = text.split('\n');
   const sections: Section[] = [];
   let currentSection: Section | null = null;
@@ -91,7 +85,7 @@ function parseFreeShowFormat(text: string): Omit<Song, 'id'> {
 }
 
 // Both formats are similar now, just use FreeShow parser
-function parseUltimateGuitarFormat(text: string): Omit<Song, 'id'> {
+function parseUltimateGuitarFormat(text: string): Omit<Song, 'id' | 'createdAt' | 'updatedAt'> {
   return parseFreeShowFormat(text);
 }
 
@@ -99,12 +93,12 @@ export function SongProvider({ children }: { children: ReactNode }) {
   const [songs, setSongs] = useState<Song[]>([]);
   const [currentTranspose, setCurrentTranspose] = useState<string>('');
 
-  const addSong = (song: Omit<Song, 'id'>) => {
+  const addSong = (song: Omit<Song, 'id' | 'createdAt' | 'updatedAt'>) => {
     const newSong: Song = {
       ...song,
       id: crypto.randomUUID(),
-      updatedAt: new Date().toISOString(),
       createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
     };
     setSongs((prev) => [...prev, newSong]);
   };
@@ -127,7 +121,7 @@ export function SongProvider({ children }: { children: ReactNode }) {
     return songs.find((song) => song.id === id);
   };
 
-  const importFromText = (text: string): Omit<Song, 'id'> => {
+  const importFromText = (text: string): Omit<Song, 'id' | 'createdAt' | 'updatedAt'> => {
     // Try to detect the format
     if (text.includes('[') && text.includes(']')) {
       return parseUltimateGuitarFormat(text);

@@ -1,29 +1,31 @@
 import { databases, config, generateId } from './appwrite';
 import { Query } from 'appwrite';
 import { logger } from './logger';
+import type { Song, Section } from '../types/song';
 
-export interface Song {
+// Re-export types for compatibility
+export type { Song, Section } from '../types/song';
+
+// Appwrite document interface
+interface AppwriteDocument {
   $id?: string;
+  $collectionId?: string;
+  $databaseId?: string;
+  $createdAt?: string;
+  $updatedAt?: string;
+  $permissions?: string[];
+}
+
+// Song interface for Appwrite (sections as JSON string)
+interface AppwriteSong extends AppwriteDocument {
   id: string;
   title: string;
   artist: string;
-  sections: Section[] | string; // Can be array in app or JSON string in database
+  sections: string; // JSON string in database
   createdAt: string;
   updatedAt: string;
   tags?: string[];
   notes?: string;
-}
-
-export interface Section {
-  type: 'verse' | 'chorus' | 'bridge' | 'tag' | 'break' | 'intro' | 'outro' | 'pre-chorus';
-  content: string;
-  number?: number;
-  chords: {
-    id: string;
-    text: string;
-    position: number;
-    line: number;
-  }[];
 }
 
 export async function saveSong(song: Omit<Song, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
@@ -38,7 +40,7 @@ export async function saveSong(song: Omit<Song, 'id' | 'createdAt' | 'updatedAt'
     const now = new Date().toISOString();
     
     // Create clean object with only allowed fields
-    const songWithMetadata = {
+    const songWithMetadata: Omit<AppwriteSong, '$id'> = {
       id: songId,
       title: song.title,
       artist: song.artist,
@@ -76,11 +78,17 @@ export async function getAllSongs(): Promise<Song[]> {
 
     logger.log('Retrieved songs:', result.documents.length);
     
-    // Parse sections from JSON string back to object
-    const songs = result.documents.map(doc => ({
-      ...doc,
-      sections: typeof doc.sections === 'string' ? JSON.parse(doc.sections) : doc.sections
-    })) as Song[];
+    // Convert Appwrite documents to Song objects
+    const songs: Song[] = result.documents.map((doc: any) => ({
+      id: doc.id,
+      title: doc.title,
+      artist: doc.artist,
+      sections: typeof doc.sections === 'string' ? JSON.parse(doc.sections) : doc.sections,
+      createdAt: doc.createdAt,
+      updatedAt: doc.updatedAt,
+      tags: doc.tags || [],
+      notes: doc.notes || ''
+    }));
     
     return songs;
   } catch (error) {
@@ -99,14 +107,20 @@ export async function getSong(id: string): Promise<Song | null> {
 
     logger.log('Retrieved song:', id, result ? 'found' : 'not found');
     
-    // Parse sections from JSON string back to object
-    const song = {
-      ...result,
-      sections: typeof result.sections === 'string' ? JSON.parse(result.sections) : result.sections
-    } as Song;
+    // Convert Appwrite document to Song object
+    const song: Song = {
+      id: result.id,
+      title: result.title,
+      artist: result.artist,
+      sections: typeof result.sections === 'string' ? JSON.parse(result.sections) : result.sections,
+      createdAt: result.createdAt,
+      updatedAt: result.updatedAt,
+      tags: result.tags || [],
+      notes: result.notes || ''
+    };
     
     return song;
-  } catch (error) {
+  } catch (error: any) {
     if (error.code === 404) {
       return null;
     }
@@ -123,20 +137,19 @@ export async function updateSong(song: Song): Promise<void> {
           .filter(tag => tag.length > 0)
       : [];
     
-    const updatedSong = {
-      ...song,
+    const updateData: Partial<AppwriteSong> = {
+      title: song.title,
+      artist: song.artist,
+      sections: JSON.stringify(song.sections), // Convert sections to JSON string
       updatedAt: new Date().toISOString(),
       tags: processedTags,
-      sections: JSON.stringify(song.sections) // Convert sections to JSON string
+      notes: song.notes || ''
     };
-
-    // Remove $id from the update payload
-    const { $id, ...updateData } = updatedSong;
 
     await databases.updateDocument(
       config.databaseId,
       config.songsCollectionId,
-      song.$id || song.id,
+      song.id!,
       updateData
     );
 
@@ -167,7 +180,7 @@ export async function clearDatabase(): Promise<void> {
     const songs = await getAllSongs();
     
     for (const song of songs) {
-      await deleteSong(song.$id || song.id);
+      await deleteSong(song.id!);
     }
 
     logger.log('Database cleared successfully');
