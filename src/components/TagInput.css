@@ -1,0 +1,63 @@
+/* Custom styling for tag pills in the MultiSelect */
+.tag-pill {
+  border-radius: 4px;
+  padding: 2px 8px;
+  font-size: 12px;
+  font-weight: 500;
+  color: white;
+}
+
+/* Tag color classes */
+.tag-color-blue { background-color: var(--mantine-color-blue-6); }
+.tag-color-red { background-color: var(--mantine-color-red-6); }
+.tag-color-green { background-color: var(--mantine-color-green-6); }
+.tag-color-yellow { background-color: var(--mantine-color-yellow-7); }
+.tag-color-grape { background-color: var(--mantine-color-grape-6); }
+.tag-color-violet { background-color: var(--mantine-color-violet-6); }
+.tag-color-indigo { background-color: var(--mantine-color-indigo-6); }
+.tag-color-cyan { background-color: var(--mantine-color-cyan-6); }
+.tag-color-teal { background-color: var(--mantine-color-teal-6); }
+.tag-color-pink { background-color: var(--mantine-color-pink-6); }
+.tag-color-orange { background-color: var(--mantine-color-orange-6); }
+.tag-color-lime { background-color: var(--mantine-color-lime-6); }
+
+/* Tag color dot for dropdown items */
+.tag-color-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin-right: 8px;
+}
+
+/* Custom tag input styling */
+.tag-input-container {
+  display: flex;
+  border: 1px solid var(--mantine-color-dark-4);
+  border-radius: 4px;
+  background-color: var(--mantine-color-dark-6);
+  cursor: text;
+  min-height: 36px;
+  padding: 0 8px;
+}
+
+.tag-input {
+  border: none;
+  outline: none;
+  background: transparent;
+  flex-grow: 1;
+  min-width: 80px;
+  padding: 5px;
+  font-size: 14px;
+  color: inherit;
+  caret-color: var(--mantine-color-blue-5);
+}
+
+.tag-input::placeholder {
+  color: var(--mantine-color-gray-6);
+}
+
+.tag-input-container:focus-within {
+  border-color: var(--mantine-color-blue-filled);
+  box-shadow: 0 0 0 1px var(--mantine-color-blue-filled);
+}

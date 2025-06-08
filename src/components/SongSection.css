@@ -1,0 +1,21 @@
+/* Drag and drop styles */
+.drag-over {
+  background-color: rgba(0, 120, 212, 0.1);
+  border: 1px dashed #0078d4 !important;
+}
+
+.chord-drop-indicator {
+  position: absolute;
+  top: 0;
+  width: 2px;
+  height: 1.5em;
+  background-color: #0078d4;
+  animation: pulse 1s infinite;
+  z-index: 10;
+}
+
+@keyframes pulse {
+  0% { opacity: 0.5; }
+  50% { opacity: 1; }
+  100% { opacity: 0.5; }
+}

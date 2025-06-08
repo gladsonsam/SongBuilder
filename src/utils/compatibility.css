@@ -1,0 +1,105 @@
+/* CSS Compatibility fixes */
+
+/* Fix for '-moz-appearance' not supported by Chrome, Edge, Safari */
+:root {
+  --appearance-none: none;
+}
+
+[class*="moz-appearance"] {
+  -moz-appearance: none;
+  appearance: var(--appearance-none);
+}
+
+/* Fix for '-webkit-text-size-adjust' not supported by Chrome, Chrome Android, Edge, Firefox, Safari */
+:root {
+  --text-size-adjust: none;
+}
+
+[class*="webkit-text-size-adjust"] {
+  -webkit-text-size-adjust: none;
+  text-size-adjust: var(--text-size-adjust);
+}
+
+/* Fix for 'user-select' not supported by Safari */
+:root {
+  --user-select: none;
+}
+
+[class*="user-select"] {
+  -webkit-user-select: var(--user-select);
+  -moz-user-select: var(--user-select);
+  -ms-user-select: var(--user-select);
+  user-select: var(--user-select);
+}
+
+/* Fix for 'scrollbar-width' not supported by Safari */
+:root {
+  --scrollbar-width: thin;
+}
+
+[class*="scrollbar-width"] {
+  scrollbar-width: var(--scrollbar-width);
+}
+
+[class*="scrollbar-width"]::-webkit-scrollbar {
+  width: 8px;
+}
+
+[class*="scrollbar-width"]::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+}
+
+/* Fix for 'text-wrap' not supported by Safari < 17.4 */
+:root {
+  --text-wrap: wrap;
+}
+
+[class*="text-wrap"] {
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  text-wrap: var(--text-wrap);
+}
+
+/* Fix for 'backdrop-filter' vendor prefixing */
+:root {
+  --backdrop-filter: blur(10px);
+}
+
+[class*="backdrop-filter"] {
+  -webkit-backdrop-filter: var(--backdrop-filter);
+  backdrop-filter: var(--backdrop-filter);
+}
+
+/* Fix for 'background-clip' vendor prefixing */
+:root {
+  --background-clip: padding-box;
+}
+
+[class*="background-clip"] {
+  -webkit-background-clip: var(--background-clip);
+  background-clip: var(--background-clip);
+}
+
+/* Fix for 'transform' vendor prefixing */
+:root {
+  --transform: none;
+}
+
+[class*="transform"] {
+  -webkit-transform: var(--transform);
+  -moz-transform: var(--transform);
+  -ms-transform: var(--transform);
+  transform: var(--transform);
+}
+
+/* Fix for 'text-size-adjust' not supported by Firefox, Safari */
+:root {
+  --text-size-adjust: 100%;
+}
+
+[class*="text-size-adjust"] {
+  -webkit-text-size-adjust: var(--text-size-adjust);
+  -moz-text-size-adjust: var(--text-size-adjust);
+  text-size-adjust: var(--text-size-adjust);
+}
