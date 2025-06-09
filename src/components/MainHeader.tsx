@@ -20,6 +20,7 @@ export function MainHeader({ opened, onToggle }: MainHeaderProps) {
         />
         <Title order={1} size={rem(24)}>SongBuilder</Title>
       </Group>
+      
       <Button
         variant="default"
         onClick={toggleColorScheme}

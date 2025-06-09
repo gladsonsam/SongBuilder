@@ -3,23 +3,18 @@ import { Container, Title, Text, Button, Stack, Group, Paper, Skeleton, TextInpu
 import { Link, useNavigate } from 'react-router-dom';
 import { IconPlus, IconUpload, IconClock, IconSearch } from '@tabler/icons-react';
 import { UnifiedImportModal } from '../components/UnifiedImportModal';
-import { getAllSongs, saveSong } from '../utils/appwriteDb';
 import { toTitleCase } from '../utils/formatters';
-import type { Song, Section } from '../types/song';
+import type { Section } from '../types/song';
+import { useStorage } from '../context/StorageContext';
 
 export function HomePage() {
   const navigate = useNavigate();
+  const { songs, isLoading, saveSong } = useStorage();
   const [importModalOpen, setImportModalOpen] = React.useState(false);
-  const [recentSongs, setRecentSongs] = React.useState<Song[]>([]);
-  const [allSongs, setAllSongs] = React.useState<Song[]>([]);
   const [searchQuery, setSearchQuery] = React.useState('');
-  const [isLoading, setIsLoading] = React.useState(true);
 
-  // Load all songs on mount and set up keyboard listener
+  // Set up keyboard listener for search
   React.useEffect(() => {
-    loadSongs();
-    
-    // Set up global keyboard listener to focus search on keypress
     const handleKeyDown = (e: KeyboardEvent) => {
       // Only handle if not already in an input field
       if (
@@ -45,23 +40,12 @@ export function HomePage() {
     };
   }, []);
 
-  const loadSongs = async () => {
-    try {
-      setIsLoading(true);
-      const songs = await getAllSongs();
-      setAllSongs(songs);
-      
-      // Sort by updatedAt and take the 5 most recent
-      const recent = songs
-        .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
-        .slice(0, 5);
-      setRecentSongs(recent);
-    } catch (error) {
-      console.error('Failed to load songs:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  // Get recent songs from the storage context
+  const recentSongs = React.useMemo(() => {
+    return songs
+      .sort((a, b) => new Date(b.updatedAt!).getTime() - new Date(a.updatedAt!).getTime())
+      .slice(0, 5);
+  }, [songs]);
 
   const handleImport = async (sections: Section[], metadata?: { title?: string; artist?: string }) => {
     try {
@@ -73,9 +57,6 @@ export function HomePage() {
         artist: metadata?.artist || '',
         sections
       });
-
-      // Reload songs to update the lists
-      await loadSongs();
       
       // Navigate to the song editor
       navigate(`/songs/${newId}`);
@@ -172,7 +153,7 @@ export function HomePage() {
             ) : searchQuery ? (
               // When searching, show all matching songs
               <Stack gap="sm">
-                {allSongs
+                {songs
                   .filter(song => {
                     const query = searchQuery.toLowerCase();
                     
@@ -216,7 +197,7 @@ export function HomePage() {
                     </Group>
                   </Paper>
                 ))}
-                {allSongs.filter(song => {
+                {songs.filter(song => {
                   const query = searchQuery.toLowerCase();
                   
                   // Check title and artist
@@ -281,7 +262,7 @@ export function HomePage() {
         opened={importModalOpen}
         onClose={() => setImportModalOpen(false)}
         onImport={handleImport}
-        onBatchComplete={loadSongs}
+        onBatchComplete={() => {}}
       />
     </Container>
   );

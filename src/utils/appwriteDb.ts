@@ -2,6 +2,7 @@ import { databases, config, generateId } from './appwrite';
 import { Query } from 'appwrite';
 import { logger } from './logger';
 import type { Song, Section } from '../types/song';
+import type { StorageService } from './storageInterface';
 
 // Re-export types for compatibility
 export type { Song, Section } from '../types/song';
@@ -209,5 +210,40 @@ export async function importDB(json: string): Promise<void> {
     };
     
     await saveSong(cleanSong);
+  }
+}
+
+// Cloud storage service class
+export class CloudStorageService implements StorageService {
+  async saveSong(song: Omit<Song, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
+    return saveSong(song);
+  }
+
+  async getAllSongs(): Promise<Song[]> {
+    return getAllSongs();
+  }
+
+  async getSong(id: string): Promise<Song | null> {
+    return getSong(id);
+  }
+
+  async updateSong(song: Song): Promise<void> {
+    return updateSong(song);
+  }
+
+  async deleteSong(id: string): Promise<void> {
+    return deleteSong(id);
+  }
+
+  async clearDatabase(): Promise<void> {
+    return clearDatabase();
+  }
+
+  async exportDB(): Promise<string> {
+    return exportDB();
+  }
+
+  async importDB(json: string): Promise<void> {
+    return importDB(json);
   }
 }

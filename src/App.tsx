@@ -8,7 +8,8 @@ import { HomePage } from './pages/HomePage';
 import { SongEditor } from './pages/SongEditor';
 import { SongList } from './pages/SongList';
 import { Settings } from './pages/Settings';
-import { SongProvider } from './context/SongContext';
+import { AuthProvider } from './context/AuthContext';
+import { StorageProvider } from './context/StorageContext';
 import { SettingsProvider } from './context/SettingsContext';
 import '@mantine/core/styles.css';
 import '@mantine/notifications/styles.css';
@@ -48,9 +49,10 @@ export default function App() {
       }}
     >
       <SettingsProvider>
-        <SongProvider>
-          <Notifications />
-          <Router>
+        <AuthProvider>
+          <StorageProvider>
+            <Notifications />
+            <Router>
             <AppShell
               header={{ height: { base: 60, sm: 60 } }}
               navbar={{
@@ -88,8 +90,9 @@ export default function App() {
                 </Routes>
               </AppShell.Main>
             </AppShell>
-          </Router>
-        </SongProvider>
+            </Router>
+          </StorageProvider>
+        </AuthProvider>
       </SettingsProvider>
     </MantineProvider>
   );
