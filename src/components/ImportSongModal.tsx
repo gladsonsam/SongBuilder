@@ -6,6 +6,7 @@ import { Section } from '../types/song';
 import { parseUltimateGuitarText, parseFreeshowText, parseShowFile, parseXMLFile } from '../utils/parsers';
 import { NoChordWarningModal } from './NoChordWarningModal';
 import { toTitleCase } from '../utils/formatters';
+import { sanitizeTextContent } from '../utils/validation';
 
 interface ImportSongModalProps {
   opened: boolean;
@@ -21,6 +22,7 @@ export function ImportSongModal({ opened, onClose, onImport }: ImportSongModalPr
     sections: Section[],
     metadata?: { title?: string; artist?: string }
   } | null>(null);
+  // Validation will be added when needed
 
   const detectFormat = (text: string): 'ultimate-guitar' | 'freeshow' | 'openlp' => {
     // Check for Ultimate Guitar format (chords above lyrics)
@@ -73,13 +75,35 @@ export function ImportSongModal({ opened, onClose, onImport }: ImportSongModalPr
       }
 
       setIsLoading(true);
-      const format = detectFormat(importText);
+      
+      // Sanitize import text for security
+      const sanitizedText = sanitizeTextContent(importText);
+      
+      if (sanitizedText !== importText) {
+        notifications.show({
+          title: 'Content Sanitized',
+          message: 'Potentially unsafe content was removed from the import text',
+          color: 'yellow'
+        });
+      }
+      
+      const format = detectFormat(sanitizedText);
 
       let sections: Section[] = [];
       if (format === 'ultimate-guitar') {
-        sections = parseUltimateGuitarText(importText);
+        sections = parseUltimateGuitarText(sanitizedText);
       } else if (format === 'freeshow') {
-        sections = parseFreeshowText(importText);
+        sections = parseFreeshowText(sanitizedText);
+      }
+
+      // Validate sections before import
+      if (sections.length > 50) {
+        notifications.show({
+          title: 'Too Many Sections',
+          message: 'Song has too many sections (max 50). Some sections may be truncated.',
+          color: 'yellow'
+        });
+        sections = sections.slice(0, 50);
       }
 
       onImport(sections);
@@ -240,10 +264,22 @@ export function ImportSongModal({ opened, onClose, onImport }: ImportSongModalPr
             </Text>
             <Textarea
               value={importText}
-              onChange={(e) => setImportText(e.target.value)}
+              onChange={(e) => {
+                const text = e.target.value;
+                if (text.length <= 50000) { // Reasonable limit for import text
+                  setImportText(text);
+                } else {
+                  notifications.show({
+                    title: 'Content Too Large',
+                    message: 'Import text is too large (max 50,000 characters)',
+                    color: 'red'
+                  });
+                }
+              }}
               placeholder="Paste song text here..."
               minRows={10}
               autosize
+              error={importText.length > 45000 ? 'Approaching character limit' : undefined}
             />
             <Group justify="flex-end">
               <Button variant="light" onClick={onClose} title="Cancel import operation">

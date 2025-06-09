@@ -123,9 +123,13 @@ export function ExportModal({ opened, onClose, sections }: ExportModalProps) {
       const { title, artist, fileName } = getSongMetadata();
       
       const songData = {
+        id: 'temp-id',
         title,
         artist,
-        sections: updatedSections
+        sections: updatedSections,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        tags: []
       };
       
       let text = '';
@@ -142,7 +146,7 @@ export function ExportModal({ opened, onClose, sections }: ExportModalProps) {
       
       if (fileFormat === 'pdf') {
         // Generate PDF and trigger download
-        exportToPDF({ ...songData, tags: [] }).then((pdfBlob) => {
+        exportToPDF(songData).then((pdfBlob) => {
           const url = URL.createObjectURL(pdfBlob);
           const link = document.createElement('a');
           link.href = url;

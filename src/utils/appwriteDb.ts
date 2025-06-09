@@ -1,11 +1,11 @@
 import { databases, config, generateId } from './appwrite';
 import { Query } from 'appwrite';
 import { logger } from './logger';
-import type { Song, Section } from '../types/song';
+import type { Song } from '../types/song';
 import type { StorageService } from './storageInterface';
 
 // Re-export types for compatibility
-export type { Song, Section } from '../types/song';
+export type { Song } from '../types/song';
 
 // Appwrite document interface
 interface AppwriteDocument {

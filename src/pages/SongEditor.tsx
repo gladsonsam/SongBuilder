@@ -1,12 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, lazy, Suspense, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Stack, Title, TextInput, Button, Group, ActionIcon, Text, Paper, Modal, Grid, Menu, Tooltip, Tabs } from '@mantine/core';
+import { Stack, Title, TextInput, Button, Group, ActionIcon, Text, Paper, Modal, Grid, Menu, Tooltip, Tabs, Loader, Center } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { IconArrowLeft, IconUpload, IconDownload, IconMusic, IconPlus, IconArrowUp, IconArrowDown, IconTrash, IconNotes, IconEdit } from '@tabler/icons-react';
 import '../components/SectionControls.css';
 import { ArtistInput } from '../components/ArtistInput';
-import { UnifiedImportModal } from '../components/UnifiedImportModal';
-import { ExportModal } from '../components/ExportModal';
 import { getSong, saveSong, updateSong } from '../utils/appwriteDb';
 import { SongSection } from '../components/SongSection';
 import { Section, Song } from '../types/song';
@@ -14,19 +12,39 @@ import { Section, Song } from '../types/song';
 import { InlineEditor } from '../components/InlineEditor';
 import TransposeControl from '../components/TransposeControl';
 import { TagInput } from '../components/TagInput';
-import { useSongs } from '../context/SongContext';
+// Removed SongContext import - using Appwrite directly
 import { detectKey } from '../utils/transpose';
 import { SongNotes } from '../components/SongNotes';
-import { TextEditorModal } from '../components/TextEditorModal';
+import { useValidation, ValidationError, sanitizeTextContent } from '../utils/validation';
+
+// Lazy load modal components
+const UnifiedImportModal = lazy(() => import('../components/UnifiedImportModal').then(m => ({ default: m.UnifiedImportModal })));
+const ExportModal = lazy(() => import('../components/ExportModal').then(m => ({ default: m.ExportModal })));
+const TextEditorModal = lazy(() => import('../components/TextEditorModal').then(m => ({ default: m.TextEditorModal })));
+
+// Modal loader component
+const ModalLoader = () => (
+  <Center p="xl">
+    <Loader size="sm" />
+  </Center>
+);
 
 export function SongEditor() {
   const navigate = useNavigate();
   const { id } = useParams();
-  // Only use the context for the initial load and final save, not for ongoing edits
-  const { updateSong: updateContextSong } = useSongs();
+  // Using Appwrite database directly - no context needed
+  const { validateSongMetadata } = useValidation();
 
   // State
-  const [song, setSong] = useState<Song>({ title: '', artist: '', sections: [], tags: [] });
+  const [song, setSong] = useState<Song>({ 
+    id: '', 
+    title: '', 
+    artist: '', 
+    sections: [], 
+    tags: [],
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  });
   // Add separate state for title and artist to ensure they can be edited independently
   const [title, setTitle] = useState('');
   const [artist, setArtist] = useState('');
@@ -98,7 +116,15 @@ export function SongEditor() {
       });
     } else {
       // New song: clear all fields
-      setSong({ title: '', artist: '', sections: [], tags: [] });
+      setSong({ 
+        id: '', 
+        title: '', 
+        artist: '', 
+        sections: [], 
+        tags: [],
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      });
       setTitle('');
       setArtist('');
       setTags([]);
@@ -207,6 +233,21 @@ export function SongEditor() {
         sections: numberedSections // Use the numbered sections
       };
 
+      // Validate metadata before saving
+      try {
+        validateSongMetadata({
+          title: updatedSong.title,
+          artist: updatedSong.artist,
+          tags: updatedSong.tags
+        });
+      } catch (error) {
+        if (error instanceof ValidationError) {
+          console.error('Validation failed during autosave:', error.details);
+          // Don't block autosave for validation errors, just log them
+          // The user will see the validation errors through the input handlers
+        }
+      }
+
       // --- Transpose chords to match transposedKey if set ---
       if (updatedSong.transposedKey && updatedSong.originalKey && updatedSong.sections) {
         const NOTES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
@@ -305,9 +346,6 @@ export function SongEditor() {
         };
         
         await updateSong(songToUpdate);
-        
-        // Also update in context
-        updateContextSong(id, updatedSong);
       } else {
         const newId = await saveSong({
           title: updatedSong.title,
@@ -440,17 +478,32 @@ export function SongEditor() {
             <TextInput
               label="Title"
               value={title}
-              onChange={(e) => setTitle(e.target.value)}
+              onChange={(e) => {
+                const sanitizedValue = sanitizeTextContent(e.target.value);
+                setTitle(sanitizedValue);
+              }}
               placeholder="Enter song title"
               size="md"
               leftSection={<IconMusic size={18} />}
               readOnly={isViewMode}
+              error={title.length > 200 ? 'Title too long (max 200 characters)' : undefined}
             />
             <div style={{ marginTop: '8px' }}>
               <ArtistInput
                 label="Artist"
                 value={artist}
-                onChange={setArtist}
+                onChange={useCallback((value: string) => {
+                  const sanitizedValue = sanitizeTextContent(value);
+                  if (sanitizedValue.length <= 100) {
+                    setArtist(sanitizedValue);
+                  } else {
+                    notifications.show({
+                      title: 'Validation Error',
+                      message: 'Artist name too long (max 100 characters)',
+                      color: 'red'
+                    });
+                  }
+                }, [notifications])}
                 placeholder="Enter artist name"
                 readOnly={isViewMode}
               />
@@ -479,7 +532,26 @@ export function SongEditor() {
                 <TagInput
                   label="Tags"
                   value={tags}
-                  onChange={setTags}
+                  onChange={(newTags: string[]) => {
+                    if (newTags.length <= 20) {
+                      const sanitizedTags = newTags.map(tag => sanitizeTextContent(tag));
+                      const validTags = sanitizedTags.filter(tag => tag.length <= 50);
+                      if (validTags.length !== sanitizedTags.length) {
+                        notifications.show({
+                          title: 'Validation Warning',
+                          message: 'Some tags were too long and were removed',
+                          color: 'yellow'
+                        });
+                      }
+                      setTags(validTags);
+                    } else {
+                      notifications.show({
+                        title: 'Validation Error',
+                        message: 'Too many tags (max 20)',
+                        color: 'red'
+                      });
+                    }
+                  }}
                   placeholder="Add tags like 'adoration', 'holy'..."
                   suggestions={[
                     'Adoration', 'Holy', 'Praise', 'Worship', 'Prayer',
@@ -696,27 +768,39 @@ export function SongEditor() {
         </Modal>
       )}
 
-      <UnifiedImportModal
-        opened={importModalOpen}
-        onClose={() => setImportModalOpen(false)}
-        onImport={handleImport}
-      />
+      {importModalOpen && (
+        <Suspense fallback={<ModalLoader />}>
+          <UnifiedImportModal
+            opened={importModalOpen}
+            onClose={() => setImportModalOpen(false)}
+            onImport={handleImport}
+          />
+        </Suspense>
+      )}
 
-      <ExportModal
-        opened={exportModalOpen}
-        onClose={() => setExportModalOpen(false)}
-        sections={song.sections}
-      />
+      {exportModalOpen && (
+        <Suspense fallback={<ModalLoader />}>
+          <ExportModal
+            opened={exportModalOpen}
+            onClose={() => setExportModalOpen(false)}
+            sections={song.sections}
+          />
+        </Suspense>
+      )}
 
-      <TextEditorModal
-        opened={textEditorOpen}
-        onClose={() => setTextEditorOpen(false)}
-        sections={song.sections}
-        onSave={(newSections) => {
-          setSong({ ...song, sections: updateSectionNumbers(newSections) });
-          setTextEditorOpen(false);
-        }}
-      />
+      {textEditorOpen && (
+        <Suspense fallback={<ModalLoader />}>
+          <TextEditorModal
+            opened={textEditorOpen}
+            onClose={() => setTextEditorOpen(false)}
+            sections={song.sections}
+            onSave={(newSections) => {
+              setSong({ ...song, sections: updateSectionNumbers(newSections) });
+              setTextEditorOpen(false);
+            }}
+          />
+        </Suspense>
+      )}
     </Stack>
   );
 }

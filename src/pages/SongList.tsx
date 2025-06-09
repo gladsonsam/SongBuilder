@@ -1,18 +1,27 @@
 import * as React from 'react';
 import '../components/TagInput.css';
 import { ColoredTag } from '../components/ColoredTag';
-import { Container, Title, Text, Button, Stack, Group, Paper, TextInput, ActionIcon, Skeleton, Checkbox, Menu, MultiSelect } from '@mantine/core';
+import { Container, Title, Text, Button, Stack, Group, Paper, TextInput, ActionIcon, Skeleton, Checkbox, Menu, MultiSelect, Loader, Center } from '@mantine/core';
 import { useMediaQuery } from '@mantine/hooks';
 import { notifications } from '@mantine/notifications';
 import { Link, useNavigate } from 'react-router-dom';
 import { IconPlus, IconSearch, IconTrash, IconEdit, IconDots, IconDownload, IconSortAscending, IconSortDescending, IconTags, IconDatabase, IconUpload } from '@tabler/icons-react';
 import { DatabaseTools } from '../components/DatabaseTools';
-import { UnifiedImportModal } from '../components/UnifiedImportModal';
-import { BulkExportModal } from '../components/BulkExportModal';
 import { getAllSongs, deleteSong, saveSong } from '../utils/appwriteDb';
 import { getTagColor } from '../utils/tagColors';
 import { toTitleCase } from '../utils/formatters';
 import type { Song } from '../utils/appwriteDb';
+
+// Lazy load modal components
+const UnifiedImportModal = React.lazy(() => import('../components/UnifiedImportModal').then(m => ({ default: m.UnifiedImportModal })));
+const BulkExportModal = React.lazy(() => import('../components/BulkExportModal').then(m => ({ default: m.BulkExportModal })));
+
+// Modal loader component
+const ModalLoader = () => (
+  <Center p="xl">
+    <Loader size="sm" />
+  </Center>
+);
 
 type SortField = 'title' | 'artist' | 'date';
 type SortDirection = 'asc' | 'desc';
@@ -624,11 +633,15 @@ export function SongList() {
           </Paper>
         )}
         {/* Bulk Export Modal */}
-        <BulkExportModal
-          opened={bulkExportOpen}
-          onClose={() => setBulkExportOpen(false)}
-          songs={songs.filter(song => selectedSongs.has(song.id))}
-        />
+        {bulkExportOpen && (
+          <React.Suspense fallback={<ModalLoader />}>
+            <BulkExportModal
+              opened={bulkExportOpen}
+              onClose={() => setBulkExportOpen(false)}
+              songs={songs.filter(song => selectedSongs.has(song.id))}
+            />
+          </React.Suspense>
+        )}
 
         {/* Database Tools Modal */}
         <DatabaseTools
@@ -638,9 +651,11 @@ export function SongList() {
         />
         
         {/* Import Song Modal */}
-        <UnifiedImportModal
-          opened={importModalOpen}
-          onClose={() => setImportModalOpen(false)}
+        {importModalOpen && (
+          <React.Suspense fallback={<ModalLoader />}>
+            <UnifiedImportModal
+              opened={importModalOpen}
+              onClose={() => setImportModalOpen(false)}
           onImport={async (sections, metadata) => {
             try {
               // Create a new song from the imported sections
@@ -672,8 +687,10 @@ export function SongList() {
               });
             }
           }}
-          onBatchComplete={loadSongs}
-        />
+              onBatchComplete={loadSongs}
+            />
+          </React.Suspense>
+        )}
       </Stack>
     </Container>
   );

@@ -1,4 +1,4 @@
-import type { Section } from './appwriteDb';
+import type { Section } from '../types/song';
 
 /**
  * Converts a string to title case, capitalizing the first letter of each word
