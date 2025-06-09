@@ -41,7 +41,7 @@ export function SongList() {
   const [bulkExportOpen, setBulkExportOpen] = React.useState(false);
 
   // Responsive: is mobile
-  const isMobile = useMediaQuery('(max-width: 600px)');
+  const isMobile = useMediaQuery('(max-width: 48em)');
 
   // Load songs on mount and set up keyboard listener
   React.useEffect(() => {
@@ -312,23 +312,26 @@ export function SongList() {
               component={Link}
               to="/songs/new"
               leftSection={<IconPlus size={16} />}
+              size={isMobile ? "sm" : "md"}
             >
-              New Song
+              {isMobile ? "New" : "New Song"}
             </Button>
             <Button
               variant="filled"
               color="blue"
               leftSection={<IconUpload size={16} />}
               onClick={() => setImportModalOpen(true)}
+              size={isMobile ? "sm" : "md"}
             >
-              Import Song
+              {isMobile ? "Import" : "Import Song"}
             </Button>
             <Button
               variant="light"
               leftSection={<IconDatabase size={16} />}
               onClick={() => setDbToolsOpen(true)}
+              size={isMobile ? "sm" : "md"}
             >
-              Database Tools
+              {isMobile ? "DB Tools" : "Database Tools"}
             </Button>
           </Group>
         </Group>
@@ -400,24 +403,25 @@ export function SongList() {
             )}
           </Stack>
         ) : (
-          <Group align="flex-end">
+          <Stack gap="sm">
             <TextInput
               placeholder="Search titles, artists, or lyrics..."
               leftSection={<IconSearch size={16} />}
               value={searchQuery}
               onChange={(e) => handleSearchChange(e.target.value)}
-              style={{ flex: 1 }}
               autoFocus
               id="songs-search"
             />
-            <MultiSelect
-              data={availableTags}
-              value={selectedTags}
-              onChange={setSelectedTags}
-              placeholder="Filter by tags"
-              searchable
-              clearable
-              leftSection={<IconTags size={16} />}
+            <Group align="flex-end" wrap="nowrap" style={{ overflow: 'hidden' }}>
+              <MultiSelect
+                data={availableTags}
+                value={selectedTags}
+                onChange={setSelectedTags}
+                placeholder="Filter by tags"
+                searchable
+                clearable
+                leftSection={<IconTags size={16} />}
+                style={{ flex: 1, minWidth: 0 }}
               renderOption={({ option }) => (
                 <Group gap="xs">
                   <div
@@ -437,6 +441,7 @@ export function SongList() {
                 }
               }}
             />
+            </Group>
             {/* Display selected tags with colors */}
             <Group gap="xs" mt="xs">
               {selectedTags.map((tag) => (
@@ -460,7 +465,7 @@ export function SongList() {
                 onChange={toggleSelectAll}
               />
             )}
-          </Group>
+          </Stack>
         )}
 
 
@@ -568,7 +573,7 @@ export function SongList() {
                       )}
                     </Stack>
                   </Group>
-                  <Group>
+                  <Group gap="xs">
                     <Button
                       onClick={(e) => {
                         e.stopPropagation();
@@ -576,12 +581,17 @@ export function SongList() {
                       }}
                       variant="light"
                       leftSection={<IconEdit size={16} />}
+                      size={isMobile ? "sm" : "md"}
                     >
                       Edit
                     </Button>
                     <Menu shadow="md" width={200}>
                       <Menu.Target>
-                        <ActionIcon variant="light">
+                        <ActionIcon 
+                          variant="light" 
+                          size={isMobile ? "md" : "sm"}
+                          style={{ minWidth: isMobile ? '44px' : undefined, minHeight: isMobile ? '44px' : undefined }}
+                        >
                           <IconDots size={16} />
                         </ActionIcon>
                       </Menu.Target>

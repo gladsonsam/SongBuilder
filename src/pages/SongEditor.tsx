@@ -1,6 +1,7 @@
 import { useEffect, useState, lazy, Suspense, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Stack, Title, TextInput, Button, Group, ActionIcon, Text, Paper, Modal, Grid, Menu, Tooltip, Tabs, Loader, Center } from '@mantine/core';
+import { useMediaQuery } from '@mantine/hooks';
 import { notifications } from '@mantine/notifications';
 import { IconArrowLeft, IconUpload, IconDownload, IconMusic, IconPlus, IconArrowUp, IconArrowDown, IconTrash, IconNotes, IconEdit } from '@tabler/icons-react';
 import '../components/SectionControls.css';
@@ -34,6 +35,7 @@ export function SongEditor() {
   const { id } = useParams();
   const { getSong, saveSong, updateSong } = useStorage();
   const { validateSongMetadata } = useValidation();
+  const isMobile = useMediaQuery('(max-width: 48em)');
 
   // State
   const [song, setSong] = useState<Song>({ 
@@ -402,8 +404,8 @@ export function SongEditor() {
 
   return (
     <Stack>
-      <Group justify="space-between">
-        <Group>
+      <Group justify="space-between" align="center" wrap="wrap" gap="sm">
+        <Group gap="sm">
           <ActionIcon
             variant="subtle"
             onClick={() => {
@@ -420,9 +422,9 @@ export function SongEditor() {
           >
             <IconArrowLeft />
           </ActionIcon>
-          <Title order={2}>{id ? 'Edit Song' : 'New Song'}</Title>
+          <Title order={2} size="xl">{id ? 'Edit Song' : 'New Song'}</Title>
         </Group>
-        <Group>
+        <Group gap="xs">
           <Menu shadow="md" width={200}>
             <Menu.Target>
               <Button
@@ -567,28 +569,32 @@ export function SongEditor() {
       </Paper>
 
       <Tabs value={activeTab} onChange={setActiveTab}>
-        <Group justify="space-between" align="center">
-          <Tabs.List>
-            <Tabs.Tab value="sections" leftSection={<IconMusic size={16} />}>Sections</Tabs.Tab>
-            <Tabs.Tab value="notes" leftSection={<IconNotes size={16} />}>Notes</Tabs.Tab>
-          </Tabs.List>
-          <Group>
-            <Button
-              variant="light"
-              leftSection={<IconEdit size={16} />}
-              disabled={isViewMode}
-              onClick={() => setTextEditorOpen(true)}
-            >
-              Text Edit
-            </Button>
-            <Button
-              variant="light"
-              onClick={() => setIsViewMode(!isViewMode)}
-            >
-              {isViewMode ? 'Edit Mode' : 'View Mode'}
-            </Button>
+        <Stack gap="sm">
+          <Group justify="space-between" align="center" wrap="wrap">
+            <Tabs.List>
+              <Tabs.Tab value="sections" leftSection={<IconMusic size={16} />}>Sections</Tabs.Tab>
+              <Tabs.Tab value="notes" leftSection={<IconNotes size={16} />}>Notes</Tabs.Tab>
+            </Tabs.List>
+            <Group gap="xs" wrap="nowrap">
+              <Button
+                variant="light"
+                leftSection={<IconEdit size={16} />}
+                disabled={isViewMode}
+                onClick={() => setTextEditorOpen(true)}
+                size="sm"
+              >
+                {isMobile ? 'Edit' : 'Text Edit'}
+              </Button>
+              <Button
+                variant="light"
+                onClick={() => setIsViewMode(!isViewMode)}
+                size="sm"
+              >
+                {isViewMode ? 'Edit' : 'View'}
+              </Button>
+            </Group>
           </Group>
-        </Group>
+        </Stack>
 
         <Tabs.Panel value="sections" pt="md">
           <Paper p={0} style={{ backgroundColor: 'var(--mantine-color-dark-6)', border: 'none', boxShadow: 'none' }}>

@@ -1,5 +1,6 @@
 import React, { Suspense } from 'react';
 import { MantineProvider, AppShell, Center, Loader } from '@mantine/core';
+import { useMediaQuery } from '@mantine/hooks';
 import { Notifications } from '@mantine/notifications';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { MainHeader } from './components/MainHeader';
@@ -26,23 +27,7 @@ const PageLoader = () => (
 
 export default function App() {
   const [opened, setOpened] = React.useState(false);
-
-  // Detect if we're on mobile (Mantine's 'sm' breakpoint)
-  const isMobile = window.matchMedia('(max-width: 48em)').matches;
-
-  // Overlay style
-  const overlayStyle: React.CSSProperties = {
-    position: 'fixed',
-    top: 0,
-    left: 0,
-    width: '100vw',
-    height: '100vh',
-    backgroundColor: 'rgba(0,0,0,0.35)',
-    zIndex: 1200,
-    transition: 'opacity 0.25s',
-    opacity: opened ? 1 : 0,
-    pointerEvents: opened ? 'auto' : 'none',
-  };
+  const isMobile = useMediaQuery('(max-width: 48em)');
 
   return (
     <MantineProvider
@@ -64,30 +49,20 @@ export default function App() {
             <Notifications />
             <Router>
             <AppShell
-              header={{ height: { base: 60, sm: 60 } }}
+              header={{ height: 60 }}
               navbar={{
-                width: { base: 240, sm: 240 },
+                width: 240,
                 breakpoint: 'sm',
-                collapsed: { mobile: !opened }
+                collapsed: { mobile: !opened, desktop: false }
               }}
-              padding={{ base: 'sm', sm: 'md' }}
-              layout="alt"
+              padding="md"
             >
-              {/* Overlay for mobile sidebar */}
-              {isMobile && opened && (
-                <div
-                  style={overlayStyle}
-                  onClick={() => setOpened(false)}
-                  aria-label="Close sidebar overlay"
-                />
-              )}
-
               <AppShell.Header>
                 <MainHeader opened={opened} onToggle={() => setOpened(!opened)} />
               </AppShell.Header>
 
               <AppShell.Navbar>
-                <MainNavbar onNavClick={() => setOpened(false)} />
+                <MainNavbar onNavClick={() => isMobile && setOpened(false)} />
               </AppShell.Navbar>
 
               <AppShell.Main>
