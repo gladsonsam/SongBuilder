@@ -5,7 +5,7 @@ import { notifications } from '@mantine/notifications';
 import { IconArrowLeft, IconUpload, IconDownload, IconMusic, IconPlus, IconArrowUp, IconArrowDown, IconTrash, IconNotes, IconEdit } from '@tabler/icons-react';
 import '../components/SectionControls.css';
 import { ArtistInput } from '../components/ArtistInput';
-import { getSong, saveSong, updateSong } from '../utils/appwriteDb';
+import { useStorage } from '../context/StorageContext';
 import { SongSection } from '../components/SongSection';
 import { Section, Song } from '../types/song';
 
@@ -32,7 +32,7 @@ const ModalLoader = () => (
 export function SongEditor() {
   const navigate = useNavigate();
   const { id } = useParams();
-  // Using Appwrite database directly - no context needed
+  const { getSong, saveSong, updateSong } = useStorage();
   const { validateSongMetadata } = useValidation();
 
   // State

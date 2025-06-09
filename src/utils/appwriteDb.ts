@@ -13,6 +13,16 @@ async function ensureAuthenticated(): Promise<void> {
   }
 }
 
+// Quick authentication check without throwing
+async function isAuthenticated(): Promise<boolean> {
+  try {
+    await account.get();
+    return true;
+  } catch (error) {
+    return false;
+  }
+}
+
 // Re-export types for compatibility
 export type { Song } from '../types/song';
 
@@ -232,35 +242,50 @@ export async function importDB(json: string): Promise<void> {
 
 // Cloud storage service class
 export class CloudStorageService implements StorageService {
+  // Check authentication before any operation
+  private async checkAuth(): Promise<void> {
+    if (!(await isAuthenticated())) {
+      throw new Error('Not authenticated - cannot access cloud storage');
+    }
+  }
+
   async saveSong(song: Omit<Song, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
+    await this.checkAuth();
     return saveSong(song);
   }
 
   async getAllSongs(): Promise<Song[]> {
+    await this.checkAuth();
     return getAllSongs();
   }
 
   async getSong(id: string): Promise<Song | null> {
+    await this.checkAuth();
     return getSong(id);
   }
 
   async updateSong(song: Song): Promise<void> {
+    await this.checkAuth();
     return updateSong(song);
   }
 
   async deleteSong(id: string): Promise<void> {
+    await this.checkAuth();
     return deleteSong(id);
   }
 
   async clearDatabase(): Promise<void> {
+    await this.checkAuth();
     return clearDatabase();
   }
 
   async exportDB(): Promise<string> {
+    await this.checkAuth();
     return exportDB();
   }
 
   async importDB(json: string): Promise<void> {
+    await this.checkAuth();
     return importDB(json);
   }
 }

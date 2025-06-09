@@ -7,10 +7,10 @@ import { notifications } from '@mantine/notifications';
 import { Link, useNavigate } from 'react-router-dom';
 import { IconPlus, IconSearch, IconTrash, IconEdit, IconDots, IconDownload, IconSortAscending, IconSortDescending, IconTags, IconDatabase, IconUpload } from '@tabler/icons-react';
 import { DatabaseTools } from '../components/DatabaseTools';
-import { getAllSongs, deleteSong, saveSong } from '../utils/appwriteDb';
 import { getTagColor } from '../utils/tagColors';
 import { toTitleCase } from '../utils/formatters';
-import type { Song } from '../utils/appwriteDb';
+import type { Song } from '../types/song';
+import { useStorage } from '../context/StorageContext';
 
 // Lazy load modal components
 const UnifiedImportModal = React.lazy(() => import('../components/UnifiedImportModal').then(m => ({ default: m.UnifiedImportModal })));
@@ -28,9 +28,9 @@ type SortDirection = 'asc' | 'desc';
 
 export function SongList() {
   const navigate = useNavigate();
-  const [songs, setSongs] = React.useState<Song[]>([]);
+  const { songs: storageSongs, isLoading: storageLoading, deleteSong: deleteStorageSong, saveSong: saveStorageSong } = useStorage();
   const [searchQuery, setSearchQuery] = React.useState('');
-  const [isLoading, setIsLoading] = React.useState(true);
+  const [songs, setSongs] = React.useState<Song[]>([]);
   const [selectedSongs, setSelectedSongs] = React.useState<Set<string>>(new Set());
   const [sortField, setSortField] = React.useState<SortField>('date');
   const [sortDirection, setSortDirection] = React.useState<SortDirection>('desc');
@@ -45,7 +45,7 @@ export function SongList() {
 
   // Load songs on mount and set up keyboard listener
   React.useEffect(() => {
-    loadSongs();
+    // Songs are loaded automatically by StorageContext
     
     // Set up global keyboard listener to focus search on keypress
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -73,33 +73,21 @@ export function SongList() {
     };
   }, []);
 
-  const loadSongs = async () => {
-    try {
-      setIsLoading(true);
-      const allSongs = await getAllSongs();
-      setSongs(sortSongs(allSongs, sortField, sortDirection));
-      
-      // Extract all unique tags from songs
-      const tags = new Set<string>();
-      allSongs.forEach(song => {
-        if (song.tags && Array.isArray(song.tags) && song.tags.length > 0) {
-          song.tags.forEach(tag => tags.add(tag));
-        }
-      });
-      // Make sure we always have an array of objects with value and label properties
-      const tagOptions = Array.from(tags).sort().map(tag => ({ value: tag, label: tag }));
-      setAvailableTags(tagOptions.length > 0 ? tagOptions : []);
-    } catch (error) {
-      console.error('Failed to load songs:', error);
-      notifications.show({
-        title: 'Error',
-        message: 'Failed to load songs',
-        color: 'red'
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  // Update local state when storage songs change
+  React.useEffect(() => {
+    setSongs(sortSongs(storageSongs, sortField, sortDirection));
+    
+    // Extract all unique tags from songs
+    const tags = new Set<string>();
+    storageSongs.forEach(song => {
+      if (song.tags && Array.isArray(song.tags) && song.tags.length > 0) {
+        song.tags.forEach(tag => tags.add(tag));
+      }
+    });
+    // Make sure we always have an array of objects with value and label properties
+    const tagOptions = Array.from(tags).sort().map(tag => ({ value: tag, label: tag }));
+    setAvailableTags(tagOptions.length > 0 ? tagOptions : []);
+  }, [storageSongs, sortField, sortDirection]);
   
   // Sort songs based on selected field and direction
   const sortSongs = (songsToSort: Song[], field: SortField, direction: SortDirection): Song[] => {
@@ -142,9 +130,8 @@ export function SongList() {
   const handleDelete = async (ids: string[]) => {
     try {
       for (const id of ids) {
-        await deleteSong(id);
+        await deleteStorageSong(id);
       }
-      await loadSongs();
       setSelectedSongs(new Set());
       notifications.show({
         title: 'Success',
@@ -512,7 +499,7 @@ export function SongList() {
           </Group>
         )}
 
-        {isLoading ? (
+        {storageLoading ? (
           <Stack gap="sm">
             {[...Array(5)].map((_, i) => (
               <Skeleton key={i} height={80} radius="sm" />
@@ -647,7 +634,6 @@ export function SongList() {
         <DatabaseTools
           opened={dbToolsOpen}
           onClose={() => setDbToolsOpen(false)}
-          onComplete={loadSongs}
         />
         
         {/* Import Song Modal */}
@@ -667,7 +653,7 @@ export function SongList() {
               };
               
               // Add the song to the database
-              const songId = await saveSong(newSong);
+              const songId = await saveStorageSong(newSong);
               
               // Show success notification
               notifications.show({
@@ -687,7 +673,6 @@ export function SongList() {
               });
             }
           }}
-              onBatchComplete={loadSongs}
             />
           </React.Suspense>
         )}

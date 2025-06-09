@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Badge, CloseButton, Group, Text, Loader } from '@mantine/core';
 import { IconUser } from '@tabler/icons-react';
-import { getAllSongs } from '../utils/appwriteDb';
+import { useStorage } from '../context/StorageContext';
 import './TagInput.css'; // Reuse the tag styling
 
 interface ArtistInputProps {
@@ -12,6 +12,7 @@ interface ArtistInputProps {
 }
 
 export function ArtistInput({ value = '', onChange, placeholder = 'Add artist...', label, readOnly = false }: ArtistInputProps & { readOnly?: boolean }) {
+  const { songs } = useStorage();
   const [inputValue, setInputValue] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [artists, setArtists] = useState<string[]>([]);
@@ -20,31 +21,26 @@ export function ArtistInput({ value = '', onChange, placeholder = 'Add artist...
   const inputRef = useRef<HTMLInputElement>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
 
-  // Load all unique artists from the database
+  // Load all unique artists from the songs context
   useEffect(() => {
-    const loadArtists = async () => {
-      setIsLoading(true);
-      try {
-        const songs = await getAllSongs();
-        // Extract all artists and split multi-artist entries
-        const allArtists = songs
-          .map(song => song.artist.split(', '))
-          .flat()
-          .map(artist => artist.trim())
-          .filter(artist => artist !== '');
-        
-        // Get unique artists
-        const uniqueArtists = [...new Set(allArtists)];
-        setArtists(uniqueArtists);
-      } catch (error) {
-        console.error('Failed to load artists:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadArtists();
-  }, []);
+    setIsLoading(true);
+    try {
+      // Extract all artists and split multi-artist entries
+      const allArtists = songs
+        .map(song => song.artist.split(', '))
+        .flat()
+        .map(artist => artist.trim())
+        .filter(artist => artist !== '');
+      
+      // Get unique artists
+      const uniqueArtists = [...new Set(allArtists)];
+      setArtists(uniqueArtists);
+    } catch (error) {
+      console.error('Failed to load artists:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [songs]);
 
   // Update the parent component's value when artistArray changes
   useEffect(() => {

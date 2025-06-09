@@ -38,7 +38,14 @@ export function StorageProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!authLoading) {
       storageManager.setMode(storageMode);
-      refreshSongs();
+      // Only refresh songs if we're not trying to use cloud storage without auth
+      if (storageMode === StorageMode.LOCAL || isAuthenticated) {
+        refreshSongs();
+      } else {
+        // Clear songs when switching to unauthenticated mode
+        setSongs([]);
+        setIsLoading(false);
+      }
     }
   }, [isAuthenticated, authLoading, storageMode]);
 
