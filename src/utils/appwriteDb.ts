@@ -1,8 +1,17 @@
-import { databases, config, generateId } from './appwrite';
+import { databases, config, generateId, account } from './appwrite';
 import { Query } from 'appwrite';
 import { logger } from './logger';
 import type { Song } from '../types/song';
 import type { StorageService } from './storageInterface';
+
+// Check if user is authenticated before database operations
+async function ensureAuthenticated(): Promise<void> {
+  try {
+    await account.get();
+  } catch (error) {
+    throw new Error('User must be authenticated to access cloud database');
+  }
+}
 
 // Re-export types for compatibility
 export type { Song } from '../types/song';
@@ -30,6 +39,7 @@ interface AppwriteSong extends AppwriteDocument {
 }
 
 export async function saveSong(song: Omit<Song, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
+  await ensureAuthenticated();
   try {
     const processedTags = Array.isArray(song.tags) 
       ? song.tags
@@ -70,6 +80,7 @@ export async function saveSong(song: Omit<Song, 'id' | 'createdAt' | 'updatedAt'
 }
 
 export async function getAllSongs(): Promise<Song[]> {
+  await ensureAuthenticated();
   try {
     const result = await databases.listDocuments(
       config.databaseId,
@@ -99,6 +110,7 @@ export async function getAllSongs(): Promise<Song[]> {
 }
 
 export async function getSong(id: string): Promise<Song | null> {
+  await ensureAuthenticated();
   try {
     const result = await databases.getDocument(
       config.databaseId,
@@ -131,6 +143,7 @@ export async function getSong(id: string): Promise<Song | null> {
 }
 
 export async function updateSong(song: Song): Promise<void> {
+  await ensureAuthenticated();
   try {
     const processedTags = Array.isArray(song.tags) 
       ? song.tags
@@ -162,6 +175,7 @@ export async function updateSong(song: Song): Promise<void> {
 }
 
 export async function deleteSong(id: string): Promise<void> {
+  await ensureAuthenticated();
   try {
     await databases.deleteDocument(
       config.databaseId,
@@ -177,6 +191,7 @@ export async function deleteSong(id: string): Promise<void> {
 }
 
 export async function clearDatabase(): Promise<void> {
+  await ensureAuthenticated();
   try {
     const songs = await getAllSongs();
     
@@ -192,11 +207,13 @@ export async function clearDatabase(): Promise<void> {
 }
 
 export async function exportDB(): Promise<string> {
+  await ensureAuthenticated();
   const songs = await getAllSongs();
   return JSON.stringify(songs, null, 2);
 }
 
 export async function importDB(json: string): Promise<void> {
+  await ensureAuthenticated();
   const songs = JSON.parse(json) as any[];
   
   for (const song of songs) {
