@@ -11,54 +11,16 @@ export default defineConfig({
   },
   build: {
     rollupOptions: {
+      external: () => false,
       treeshake: {
         preset: 'recommended',
         moduleSideEffects: false
       },
       output: {
-        manualChunks: (id) => {
-          // Vendor chunks
-          if (id.includes('node_modules')) {
-            if (id.includes('react') || id.includes('react-dom')) {
-              return 'react-vendor';
-            }
-            if (id.includes('react-router')) {
-              return 'router-vendor';
-            }
-            if (id.includes('@mantine') || id.includes('@emotion')) {
-              return 'mantine-vendor';
-            }
-            if (id.includes('@tabler/icons')) {
-              return 'icons-vendor';
-            }
-            if (id.includes('@tiptap') || id.includes('prosemirror')) {
-              return 'editor-vendor';
-            }
-            if (id.includes('pdf-lib') || id.includes('pdfmake') || id.includes('jszip') || 
-                id.includes('@tonaljs') || id.includes('uuid') || id.includes('dexie') || 
-                id.includes('appwrite')) {
-              return 'utils-vendor';
-            }
-            if (id.includes('zod') || id.includes('dompurify')) {
-              return 'validation-vendor';
-            }
-            return 'vendor';
-          }
-          
-          // App chunks
-          if (id.includes('src/pages/')) {
-            return 'pages';
-          }
-          if (id.includes('Modal') || id.includes('src/components/UnifiedImportModal') || 
-              id.includes('src/components/ExportModal') || id.includes('src/components/BatchImportModal')) {
-            return 'modals';
-          }
-          if (id.includes('src/components/')) {
-            return 'components';
-          }
-          if (id.includes('src/utils/')) {
-            return 'utils';
-          }
+        manualChunks: {
+          'react-vendor': ['react', 'react-dom'],
+          'mantine-vendor': ['@mantine/core', '@mantine/hooks', '@mantine/modals', '@mantine/notifications'],
+          'router-vendor': ['react-router-dom']
         }
       }
     },
