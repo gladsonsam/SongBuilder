@@ -19,8 +19,11 @@ export default defineConfig({
         manualChunks: (id) => {
           // Vendor chunks
           if (id.includes('node_modules')) {
-            if (id.includes('react') || id.includes('react-dom') || id.includes('react-router')) {
+            if (id.includes('react') || id.includes('react-dom')) {
               return 'react-vendor';
+            }
+            if (id.includes('react-router')) {
+              return 'router-vendor';
             }
             if (id.includes('@mantine') || id.includes('@emotion')) {
               return 'mantine-vendor';
