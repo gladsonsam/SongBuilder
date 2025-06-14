@@ -60,12 +60,60 @@ export async function saveSong(song: Omit<Song, 'id' | 'createdAt' | 'updatedAt'
     const songId = generateId();
     const now = new Date().toISOString();
     
+    // Function to progressively truncate sections until they fit
+    const truncateSections = (sections: typeof song.sections, maxLength: number = 10000): string => {
+      let json = JSON.stringify(sections);
+      if (json.length <= maxLength) return json;
+      
+      // First attempt: Remove all whitespace from content
+      let trimmedSections = sections.map(section => ({
+        ...section,
+        content: section.content.replace(/\s+/g, ' ').trim(),
+        chords: section.chords || []
+      }));
+      json = JSON.stringify(trimmedSections);
+      if (json.length <= maxLength) {
+        logger.warn(`Compressed sections by removing whitespace: ${json.length} chars`);
+        return json;
+      }
+      
+      // Second attempt: Limit content length progressively
+      const maxContentLengths = [2000, 1500, 1000, 750, 500, 300, 200, 100];
+      for (const maxLen of maxContentLengths) {
+        trimmedSections = sections.map(section => ({
+          ...section,
+          content: section.content.substring(0, maxLen).trim(),
+          chords: (section.chords || []).slice(0, 50) // Also limit chords
+        }));
+        json = JSON.stringify(trimmedSections);
+        if (json.length <= maxLength) {
+          logger.warn(`Truncated sections to ${maxLen} chars per section: total ${json.length} chars`);
+          return json;
+        }
+      }
+      
+      // Final attempt: Keep only essential data
+      trimmedSections = sections.slice(0, 10).map(section => ({
+        type: section.type,
+        content: section.content.substring(0, 100).trim(),
+        chords: []
+      }));
+      json = JSON.stringify(trimmedSections);
+      
+      if (json.length > maxLength) {
+        throw new Error(`Song content is too large even after aggressive truncation. Please split into multiple songs.`);
+      }
+      
+      logger.warn(`Aggressively truncated to first 10 sections with 100 chars each: ${json.length} chars`);
+      return json;
+    };
+    
     // Create clean object with only allowed fields
     const songWithMetadata: Omit<AppwriteSong, '$id'> = {
       id: songId,
       title: song.title,
       artist: song.artist,
-      sections: JSON.stringify(song.sections), // Convert sections to JSON string
+      sections: truncateSections(song.sections),
       createdAt: now,
       updatedAt: now,
       tags: processedTags,
@@ -161,10 +209,58 @@ export async function updateSong(song: Song): Promise<void> {
           .filter(tag => tag.length > 0)
       : [];
     
+    // Function to progressively truncate sections until they fit
+    const truncateSections = (sections: typeof song.sections, maxLength: number = 10000): string => {
+      let json = JSON.stringify(sections);
+      if (json.length <= maxLength) return json;
+      
+      // First attempt: Remove all whitespace from content
+      let trimmedSections = sections.map(section => ({
+        ...section,
+        content: section.content.replace(/\s+/g, ' ').trim(),
+        chords: section.chords || []
+      }));
+      json = JSON.stringify(trimmedSections);
+      if (json.length <= maxLength) {
+        logger.warn(`Compressed sections by removing whitespace: ${json.length} chars`);
+        return json;
+      }
+      
+      // Second attempt: Limit content length progressively
+      const maxContentLengths = [2000, 1500, 1000, 750, 500, 300, 200, 100];
+      for (const maxLen of maxContentLengths) {
+        trimmedSections = sections.map(section => ({
+          ...section,
+          content: section.content.substring(0, maxLen).trim(),
+          chords: (section.chords || []).slice(0, 50) // Also limit chords
+        }));
+        json = JSON.stringify(trimmedSections);
+        if (json.length <= maxLength) {
+          logger.warn(`Truncated sections to ${maxLen} chars per section: total ${json.length} chars`);
+          return json;
+        }
+      }
+      
+      // Final attempt: Keep only essential data
+      trimmedSections = sections.slice(0, 10).map(section => ({
+        type: section.type,
+        content: section.content.substring(0, 100).trim(),
+        chords: []
+      }));
+      json = JSON.stringify(trimmedSections);
+      
+      if (json.length > maxLength) {
+        throw new Error(`Song content is too large even after aggressive truncation. Please split into multiple songs.`);
+      }
+      
+      logger.warn(`Aggressively truncated to first 10 sections with 100 chars each: ${json.length} chars`);
+      return json;
+    };
+    
     const updateData: Partial<AppwriteSong> = {
       title: song.title,
       artist: song.artist,
-      sections: JSON.stringify(song.sections), // Convert sections to JSON string
+      sections: truncateSections(song.sections),
       updatedAt: new Date().toISOString(),
       tags: processedTags,
       notes: song.notes || ''
